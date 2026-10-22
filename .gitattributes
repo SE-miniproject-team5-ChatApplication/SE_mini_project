@@ -1,0 +1,9 @@
+# Keep line endings consistent on Windows, Linux and macOS (NFR-QA-6)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.docx binary
+*.mp4 binary

@@ -1,5 +1,22 @@
-
+# dependencies
 node_modules/
+
+# environment / secrets (NFR-SEC-2) - never commit real .env files
 .env
+.env.*
+!.env.example
+
+# build and test output
+dist/
 coverage/
+*.log
+
+# runtime data
+server/uploads/
+backups/
+
+# OS / editor
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
