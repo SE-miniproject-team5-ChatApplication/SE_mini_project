@@ -1,7 +1,12 @@
 // Central configuration. Every value comes from environment variables so that
 // no secret or machine-specific setting is written in the source code.
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+
+// Tests load server/.env.test themselves (tests/helpers/env.js) so they can
+// never touch the development database configured in server/.env.
+if (process.env.NODE_ENV !== 'test') {
+  require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+}
 
 const env = process.env.NODE_ENV || 'development';
 
