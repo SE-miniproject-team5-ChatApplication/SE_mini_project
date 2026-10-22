@@ -4,7 +4,7 @@
   "description": "",
   "main": "server/index.js",
   "scripts": {
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --coverage",
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
     "lint": "eslint server"
@@ -29,8 +29,23 @@
   "devDependencies": {
     "eslint": "^8.57.1",
     "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.4.3",
     "nodemon": "^3.1.14",
     "socket.io-client": "^4.8.4",
     "supertest": "^7.3.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "server/**/*.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": "70",
+        "functions": "70",
+        "lines": "70",
+        "statements": "70"
+      }
+    }
   }
 }
