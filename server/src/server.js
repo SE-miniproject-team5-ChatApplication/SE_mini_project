@@ -3,8 +3,10 @@ const http = require('http');
 const config = require('./config');
 const logger = require('./utils/logger');
 const { createApp } = require('./app');
+const { connectDb } = require('./config/db');
 
 async function start() {
+  await connectDb();
   const app = createApp();
   const server = http.createServer(app);
   await new Promise((resolve) => server.listen(config.port, resolve));
