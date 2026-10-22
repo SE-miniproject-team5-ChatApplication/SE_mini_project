@@ -4,11 +4,13 @@ const config = require('./config');
 const logger = require('./utils/logger');
 const { createApp } = require('./app');
 const { connectDb } = require('./config/db');
+const { attachSockets } = require('./sockets');
 
 async function start() {
   await connectDb();
   const app = createApp();
   const server = http.createServer(app);
+  attachSockets(server);
   await new Promise((resolve) => server.listen(config.port, resolve));
   logger.info(`Server listening on http://localhost:${config.port}`);
   return server;
