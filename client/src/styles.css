@@ -1,0 +1,74 @@
+/* Plain CSS theme (SAD 4.5). Minimum 14px text, WCAG AA contrast. */
+:root {
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --text: #1c2430;
+  --muted: #5b6676;
+  --border: #d9dee5;
+  --accent: #1f6feb;
+  --accent-text: #ffffff;
+  --mine: #dcebff;
+  --theirs: #ffffff;
+  --error: #b42318;
+  --error-bg: #fdecea;
+  --online: #1a7f37;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  color: var(--text);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); }
+button, input, textarea { font: inherit; }
+
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+.app-main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.app-footer { padding: 6px 16px; font-size: 14px; text-align: right; border-top: 1px solid var(--border); background: var(--panel); }
+
+a { color: var(--accent); }
+
+.auth-card {
+  width: min(420px, calc(100% - 32px));
+  margin: 48px auto;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.auth-card h1 { margin-top: 0; font-size: 22px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.field label { font-weight: 600; font-size: 14px; }
+.field input, .field textarea {
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+.field-error { color: var(--error); font-size: 14px; }
+
+.btn {
+  padding: 9px 14px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-secondary { background: #fff; color: var(--accent); }
+.btn-danger { background: var(--error); border-color: var(--error); }
+.btn-small { padding: 4px 8px; font-size: 14px; }
+
+.banner-error {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  color: var(--error);
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  border-radius: 6px;
+}
+.banner-error button { background: none; border: none; color: var(--error); cursor: pointer; }
