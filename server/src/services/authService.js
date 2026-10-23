@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const config = require('../config');
 const User = require('../models/User');
 const { Errors } = require('../utils/errors');
+const { signToken } = require('../utils/jwt');
 
 // REQ-AUTH-1 rules
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
@@ -55,4 +56,48 @@ async function register(body) {
   }
 }
 
-module.exports = { register, validateRegistration, PASSWORD_RE };
+// REQ-AUTH-5 settings
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCK_MINUTES = 15;
+
+// REQ-AUTH-4, REQ-AUTH-5
+async function login(body = {}) {
+  const { identifier, password } = body;
+  // Same generic error for every kind of wrong input (do not reveal which part was wrong)
+  if (typeof identifier !== 'string' || typeof password !== 'string' || !identifier.trim() || !password) {
+    throw Errors.invalidCredentials();
+  }
+
+  const id = identifier.trim().toLowerCase();
+  const user = await User.findOne({ $or: [{ username: id }, { email: id }] }).select('+passwordHash');
+  if (!user) throw Errors.invalidCredentials();
+
+  // Still locked?
+  if (user.lockUntil && user.lockUntil > new Date()) {
+    throw Errors.locked(`Account locked after ${MAX_FAILED_ATTEMPTS} failed attempts. Try again in ${LOCK_MINUTES} minutes.`);
+  }
+
+  const ok = await bcrypt.compare(password, user.passwordHash);
+  if (!ok) {
+    // An expired lock starts a fresh count
+    const previous = user.lockUntil ? 0 : user.failedLoginCount;
+    user.failedLoginCount = previous + 1;
+    user.lockUntil = null;
+    if (user.failedLoginCount >= MAX_FAILED_ATTEMPTS) {
+      user.lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
+    }
+    await user.save();
+    throw Errors.invalidCredentials();
+  }
+
+  // Success: reset the counter and issue a 24 h token
+  user.failedLoginCount = 0;
+  user.lockUntil = null;
+  user.lastLoginAt = new Date();
+  await user.save();
+
+  const { token, expiresIn } = signToken(user);
+  return { token, expiresIn, user: user.toJSON() };
+}
+
+module.exports = { register, login, validateRegistration, PASSWORD_RE, MAX_FAILED_ATTEMPTS };

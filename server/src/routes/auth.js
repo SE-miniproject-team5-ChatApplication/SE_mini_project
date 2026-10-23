@@ -14,4 +14,14 @@ router.post('/register', async (req, res, next) => {
   }
 });
 
+// POST /api/auth/login
+router.post('/login', async (req, res, next) => {
+  try {
+    const result = await authService.login(req.body);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = { basePath: '/api/auth', router };
