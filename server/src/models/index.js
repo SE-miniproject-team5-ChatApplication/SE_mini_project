@@ -5,4 +5,5 @@ module.exports = {
   Member: require('./Member'),
   Message: require('./Message'),
   Attachment: require('./Attachment'),
+  RevokedToken: require('./RevokedToken'),
 };
