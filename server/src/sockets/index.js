@@ -13,6 +13,7 @@ const logger = require('../utils/logger');
 const { verifyToken } = require('../utils/jwt');
 const { setIO } = require('../utils/realtime');
 const { User, Member } = require('../models');
+const { isRevoked } = require('../services/authService');
 
 function loadHandlers() {
   const dir = path.join(__dirname, 'handlers');
@@ -34,6 +35,7 @@ async function authenticateSocket(socket, next) {
     const token = socket.handshake.auth && socket.handshake.auth.token;
     if (!token || typeof token !== 'string') return next(unauthenticated());
     const payload = verifyToken(token);
+    if (await isRevoked(payload.jti)) return next(unauthenticated());
     const user = await User.findById(payload.sub).select('_id username').lean();
     if (!user) return next(unauthenticated());
     socket.data.userId = String(user._id);

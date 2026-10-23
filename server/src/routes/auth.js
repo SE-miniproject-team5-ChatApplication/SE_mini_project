@@ -1,6 +1,7 @@
 // Auth endpoints (SAD 4.3.1). Thin: all logic is in authService.
 const express = require('express');
 const authService = require('../services/authService');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -24,4 +25,13 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
+// POST /api/auth/logout
+router.post('/logout', requireAuth, async (req, res, next) => {
+  try {
+    await authService.logout(req.user);
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
 module.exports = { basePath: '/api/auth', router };

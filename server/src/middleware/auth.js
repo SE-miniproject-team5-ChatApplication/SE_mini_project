@@ -5,6 +5,7 @@
 const { User } = require('../models');
 const { verifyToken } = require('../utils/jwt');
 const { Errors } = require('../utils/errors');
+const { isRevoked } = require('../services/authService');
 
 async function requireAuth(req, _res, next) {
   try {
@@ -19,11 +20,14 @@ async function requireAuth(req, _res, next) {
       return next(Errors.unauthenticated('Invalid or expired token'));
     }
 
+    // Logged out already? (REQ-AUTH-6)
+    if (await isRevoked(payload.jti)) return next(Errors.unauthenticated('Invalid or expired token'));
+
     // The account must still exist
     const user = await User.findById(payload.sub).select('_id username').lean();
     if (!user) return next(Errors.unauthenticated('Invalid or expired token'));
 
-    req.user = { id: String(user._id), username: user.username, jti: payload.jti };
+    req.user = { id: String(user._id), username: user.username, jti: payload.jti, exp: payload.exp };
     return next();
   } catch (err) {
     return next(err);

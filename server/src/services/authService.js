@@ -2,8 +2,11 @@
 const bcrypt = require('bcryptjs');
 const config = require('../config');
 const User = require('../models/User');
+const RevokedToken = require('../models/RevokedToken');
 const { Errors } = require('../utils/errors');
 const { signToken } = require('../utils/jwt');
+const bus = require('../utils/eventBus');
+const { getIO } = require('../utils/realtime');
 
 // REQ-AUTH-1 rules
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
@@ -76,4 +79,32 @@ async function login(body = {}) {
   return { token, expiresIn, user: user.toJSON() };
 }
 
-module.exports = { register, login, validateRegistration, PASSWORD_RE };
+// Has this token been logged out? (used by REST middleware and socket handshake)
+async function isRevoked(jti) {
+  if (!jti) return false;
+  return Boolean(await RevokedToken.exists({ jti }));
+}
+
+// REQ-AUTH-6: revoke this token, close this session's socket, announce for presence
+async function logout({ id, jti, exp }) {
+  if (jti) {
+    const expiresAt = exp ? new Date(exp * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await RevokedToken.updateOne(
+      { jti },
+      { $setOnInsert: { jti, userId: id, expiresAt } },
+      { upsert: true }
+    );
+  }
+
+  // Only the socket opened with this token; the user's other devices stay connected
+  const io = getIO();
+  if (io) {
+    const sockets = await io.in(`user:${id}`).fetchSockets();
+    sockets.filter((s) => s.data.jti === jti).forEach((s) => s.disconnect(true));
+  }
+
+  // Presence (Pruthviraj) can listen for this and set the user offline
+  bus.emit('user:logout', { userId: id });
+}
+
+module.exports = { register, login, logout, isRevoked, validateRegistration, PASSWORD_RE };
