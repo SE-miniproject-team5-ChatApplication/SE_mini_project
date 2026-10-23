@@ -1,5 +1,7 @@
-// User profile and search (DD-PRO). Routes call these; no Express code here.
+// User search and contacts (DD-PRO). Routes call these; no Express code here.
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const Contact = require('../models/Contact');
 const { Errors } = require('../utils/errors');
 
 const SEARCH_LIMIT = 20;
@@ -27,4 +29,37 @@ async function searchUsers(currentUserId, q) {
   return users.map((u) => ({ userId: String(u._id), username: u.username, displayName: u.displayName }));
 }
 
-module.exports = { searchUsers, SEARCH_LIMIT };
+// REQ-PRO-4: list my contacts (public profile fields only)
+async function listContacts(userId) {
+  const rows = await Contact.find({ userId }).sort({ createdAt: 1 }).populate('contactUserId');
+  return rows.filter((r) => r.contactUserId).map((r) => r.contactUserId.toPublic());
+}
+
+// REQ-PRO-4: add a contact; not myself, not twice
+async function addContact(userId, contactUserId) {
+  if (typeof contactUserId !== 'string' || !mongoose.isValidObjectId(contactUserId)) {
+    throw Errors.validation('A valid contactUserId is required', 'contactUserId');
+  }
+  if (contactUserId === String(userId)) {
+    throw Errors.validation('You cannot add yourself as a contact', 'contactUserId');
+  }
+  const target = await User.findById(contactUserId);
+  if (!target) throw Errors.notFound('User not found');
+
+  try {
+    await Contact.create({ userId, contactUserId });
+  } catch (err) {
+    if (err.code === 11000) throw Errors.conflict('This user is already in your contacts', 'contactUserId');
+    throw err;
+  }
+  return target.toPublic();
+}
+
+// REQ-PRO-4: remove a contact
+async function removeContact(userId, contactUserId) {
+  if (!mongoose.isValidObjectId(contactUserId)) throw Errors.notFound('This user is not in your contacts');
+  const { deletedCount } = await Contact.deleteOne({ userId, contactUserId });
+  if (!deletedCount) throw Errors.notFound('This user is not in your contacts');
+}
+
+module.exports = { searchUsers, listContacts, addContact, removeContact, SEARCH_LIMIT };
