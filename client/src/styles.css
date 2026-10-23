@@ -110,3 +110,10 @@ a { color: var(--accent); }
   .dashboard:not(.has-active) .chat-pane { display: none; }
   .back-btn { display: inline-block; }
 }
+
+/* ---- Search and lists ---- */
+.search-input { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; }
+.plain-list { list-style: none; margin: 0; padding: 0; }
+.list-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
+.row-actions { display: flex; gap: 6px; align-items: center; }
+.bubble-failed { border-color: var(--error); }

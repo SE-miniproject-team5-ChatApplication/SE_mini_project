@@ -2,13 +2,15 @@ import { formatTime } from '../utils/format.js';
 
 // One message. Text is rendered as a React text node, so any HTML or <script>
 // inside a message is shown as plain characters and never executed (NFR-SAFE-2).
-export default function MessageBubble({ message }) {
+export default function MessageBubble({ message, mine }) {
   return (
-    <div className={`bubble-row ${message.mine ? 'mine' : 'theirs'}`}>
-      <div className="bubble">
+    <div className={`bubble-row ${mine ? 'mine' : 'theirs'}`}>
+      <div className={`bubble ${message.status === 'failed' ? 'bubble-failed' : ''}`}>
         <div className="bubble-text">{message.content}</div>
         <div className="bubble-meta">
           <span>{formatTime(message.sentAt)}</span>
+          {message.status === 'pending' && <span title="Sending">…</span>}
+          {message.status === 'failed' && <span className="field-error" title={message.error}>Not sent</span>}
         </div>
       </div>
     </div>
