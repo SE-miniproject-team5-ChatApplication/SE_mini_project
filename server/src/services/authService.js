@@ -56,43 +56,19 @@ async function register(body) {
   }
 }
 
-// REQ-AUTH-5 settings
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCK_MINUTES = 15;
-
-// REQ-AUTH-4, REQ-AUTH-5
+// REQ-AUTH-4 (account lockout, REQ-AUTH-5, is planned for Sprint 2)
 async function login(body = {}) {
   const { identifier, password } = body;
-  // Same generic error for every kind of wrong input (do not reveal which part was wrong)
   if (typeof identifier !== 'string' || typeof password !== 'string' || !identifier.trim() || !password) {
     throw Errors.invalidCredentials();
   }
 
   const id = identifier.trim().toLowerCase();
   const user = await User.findOne({ $or: [{ username: id }, { email: id }] }).select('+passwordHash');
-  if (!user) throw Errors.invalidCredentials();
-
-  // Still locked?
-  if (user.lockUntil && user.lockUntil > new Date()) {
-    throw Errors.locked(`Account locked after ${MAX_FAILED_ATTEMPTS} failed attempts. Try again in ${LOCK_MINUTES} minutes.`);
-  }
-
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) {
-    // An expired lock starts a fresh count
-    const previous = user.lockUntil ? 0 : user.failedLoginCount;
-    user.failedLoginCount = previous + 1;
-    user.lockUntil = null;
-    if (user.failedLoginCount >= MAX_FAILED_ATTEMPTS) {
-      user.lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
-    }
-    await user.save();
+  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     throw Errors.invalidCredentials();
   }
 
-  // Success: reset the counter and issue a 24 h token
-  user.failedLoginCount = 0;
-  user.lockUntil = null;
   user.lastLoginAt = new Date();
   await user.save();
 
@@ -100,4 +76,4 @@ async function login(body = {}) {
   return { token, expiresIn, user: user.toJSON() };
 }
 
-module.exports = { register, login, validateRegistration, PASSWORD_RE, MAX_FAILED_ATTEMPTS };
+module.exports = { register, login, validateRegistration, PASSWORD_RE };
