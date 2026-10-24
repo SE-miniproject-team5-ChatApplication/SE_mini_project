@@ -1,8 +1,10 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useChat } from '../context/ChatContext.jsx';
 import UserSearch from './UserSearch.jsx';
 import ContactList from './ContactList.jsx';
+import ContactButton from './ContactButton.jsx';
+import ConversationList from './ConversationList.jsx';
 
 // Left panel. Feature sections (search, contacts, chats, new group) are added
 // here by their own backlog items.
@@ -22,7 +24,8 @@ export default function Sidebar() {
         </div>
       </div>
       <div className="sidebar-body">
-        <UserSearch />
+        <UserSearch renderActions={(u) => <ContactButton user={u} />} />
+        <ConversationList />
         <ContactList
           renderActions={(u) => (
             <button type="button" className="btn btn-small" onClick={() => startDirectChat(u).catch(() => {})}>
@@ -30,9 +33,7 @@ export default function Sidebar() {
             </button>
           )}
         />
-        <p className="muted empty-hint">No conversations yet.</p>
       </div>
     </aside>
   );
 }
-

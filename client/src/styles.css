@@ -122,3 +122,12 @@ a { color: var(--accent); }
 .ticks-read { color: var(--accent); }
 .presence-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #b8c0cc; vertical-align: middle; }
 .presence-dot.online { background: var(--online); }
+
+/* ---- Conversation list (REQ-HIS-1) ---- */
+.conversation-row { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 8px 6px; border: none; border-radius: 6px; background: none; text-align: left; cursor: pointer; color: inherit; }
+.conversation-row:hover { background: var(--bg); }
+.conversation-row.active { background: var(--mine); }
+.conversation-main { display: flex; flex-direction: column; min-width: 0; }
+.conversation-name { font-weight: 600; }
+.conversation-preview { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.conversation-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
