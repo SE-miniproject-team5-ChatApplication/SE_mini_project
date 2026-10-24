@@ -117,3 +117,4 @@ a { color: var(--accent); }
 .list-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
 .row-actions { display: flex; gap: 6px; align-items: center; }
 .bubble-failed { border-color: var(--error); }
+.message-input-box { flex: 1; display: flex; flex-direction: column; }

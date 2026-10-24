@@ -1,6 +1,17 @@
 // Messaging Service (component C6).
 const { Message, Conversation } = require('../models');
+const { MAX_CONTENT_LENGTH } = require('../models/Message');
 const { Errors } = require('../utils/errors');
+
+// REQ-MSG-4 / BR-5: no empty messages, at most 2000 characters.
+function validateContent(content) {
+  if (typeof content !== 'string' || content.trim().length === 0) {
+    throw Errors.validation('Message cannot be empty', 'content');
+  }
+  if (content.length > MAX_CONTENT_LENGTH) {
+    throw Errors.validation(`Message is too long (maximum ${MAX_CONTENT_LENGTH} characters)`, 'content');
+  }
+}
 
 function previewOf(message) {
   if (message.status === 'deleted') return 'This message was deleted';
@@ -21,7 +32,7 @@ function serialize(message) {
 // confirmed the insert, and callers send the acknowledgement only after it
 // resolves - so an acknowledged message is always in the database.
 async function createMessage({ conversationId, senderId, content, clientMsgId }) {
-  if (typeof content !== 'string') throw Errors.validation('Message text is required', 'content');
+  validateContent(content);
   const message = await Message.create({
     conversationId,
     senderId,
@@ -40,4 +51,4 @@ async function createMessage({ conversationId, senderId, content, clientMsgId })
   return message;
 }
 
-module.exports = { createMessage, serialize, previewOf };
+module.exports = { createMessage, serialize, previewOf, validateContent };
