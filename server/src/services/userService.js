@@ -1,4 +1,4 @@
-// User search and contacts (DD-PRO). Routes call these; no Express code here.
+﻿// User search and contacts (DD-PRO). Routes call these; no Express code here.
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Contact = require('../models/Contact');
@@ -62,4 +62,9 @@ async function removeContact(userId, contactUserId) {
   if (!deletedCount) throw Errors.notFound('This user is not in your contacts');
 }
 
-module.exports = { searchUsers, listContacts, addContact, removeContact, SEARCH_LIMIT };
+
+// Check whether a user has added the other user to their contacts.
+async function isContact(userId, contactUserId) {
+  return Boolean(await Contact.exists({ userId, contactUserId }));
+}
+module.exports = { searchUsers, listContacts, addContact, removeContact, isContact, SEARCH_LIMIT };

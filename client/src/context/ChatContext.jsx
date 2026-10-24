@@ -1,10 +1,14 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { http } from '../api/http.js';
+import { useAuth } from './AuthContext.jsx';
+import { newClientMsgId } from '../utils/ids.js';
 
 const ChatContext = createContext(null);
 
 // State of the chat dashboard: the conversation that is open and the
 // messages loaded for each conversation (keyed by conversation id).
 export function ChatProvider({ children }) {
+  const { socket } = useAuth();
   const [activeConversation, setActiveConversation] = useState(null);
   const [messagesByConv, setMessagesByConv] = useState({});
 
@@ -30,15 +34,32 @@ export function ChatProvider({ children }) {
     });
   }, []);
 
-  // Placeholder: shows the message locally. REQ-MSG-1 sends it to the server.
+  // Opens (or creates) the one-to-one conversation with a contact.
+  const startDirectChat = useCallback(async (user) => {
+    const { data } = await http.post('/conversations/direct', { userId: user.id });
+    setActiveConversation(data);
+    return data;
+  }, []);
+
+  // REQ-MSG-1: send over the WebSocket. The message is shown at once as
+  // "pending" and replaced by the stored copy when the server acknowledges it.
   const sendMessage = useCallback(
-    (text) => {
-      if (!activeConversation) return;
-      upsertMessages(activeConversation.id, [
-        { clientMsgId: `${Date.now()}`, content: text, mine: true, status: 'pending', sentAt: new Date().toISOString() },
+    async (text) => {
+      if (!activeConversation || !socket) return;
+      const conversationId = activeConversation.id;
+      const clientMsgId = newClientMsgId();
+      upsertMessages(conversationId, [
+        { clientMsgId, conversationId, content: text, mine: true, status: 'pending', sentAt: new Date().toISOString() },
       ]);
+      try {
+        const ack = await socket.timeout(10000).emitWithAck('message:send', { conversationId, content: text, clientMsgId });
+        if (ack.ok) upsertMessages(conversationId, [{ ...ack.message, mine: true }]);
+        else upsertMessages(conversationId, [{ clientMsgId, status: 'failed', error: ack.error.message }]);
+      } catch {
+        upsertMessages(conversationId, [{ clientMsgId, status: 'failed', error: 'No response from server' }]);
+      }
     },
-    [activeConversation, upsertMessages]
+    [activeConversation, socket, upsertMessages]
   );
 
   const value = useMemo(
@@ -50,8 +71,9 @@ export function ChatProvider({ children }) {
       messagesByConv,
       upsertMessages,
       sendMessage,
+      startDirectChat,
     }),
-    [activeConversation, openConversation, closeConversation, messagesByConv, upsertMessages, sendMessage]
+    [activeConversation, openConversation, closeConversation, messagesByConv, upsertMessages, sendMessage, startDirectChat]
   );
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
