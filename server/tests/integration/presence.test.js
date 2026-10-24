@@ -53,3 +53,40 @@ describeDb('REQ-PRS-1 online/offline broadcast to contacts', () => {
     expect(res.body[0].lastSeen).toBeTruthy();
   });
 });
+
+describeDb('REQ-PRS-4 several open sessions', () => {
+  let srv;
+  beforeAll(async () => {
+    await connectTestDb();
+    srv = await startTestServer();
+  });
+  afterEach(async () => {
+    presenceService.reset();
+    await clearTestDb();
+  });
+  afterAll(async () => {
+    await srv.close();
+    await disconnectTestDb();
+  });
+
+  test('TC-PRS-03 B stays online until the last tab disconnects', async () => {
+    const { a, b } = await createDirectChat();
+    const sa = await connectClient(srv.url, a.token);
+    const tab1 = await connectClient(srv.url, b.token);
+    const tab2 = await connectClient(srv.url, b.token);
+    expect(presenceService.sessionCount(b.id)).toBe(2);
+
+    const events = [];
+    sa.on('presence:update', (p) => events.push(p.status));
+    tab1.close();
+    await new Promise((r) => setTimeout(r, 200)); // give the server time to process the disconnect
+    expect(presenceService.isOnline(b.id)).toBe(true);
+    expect(events).not.toContain('offline');
+
+    const offline = waitForMatch(sa, 'presence:update', (p) => p.status === 'offline');
+    tab2.close();
+    await offline;
+    expect(presenceService.isOnline(b.id)).toBe(false);
+    sa.close();
+  });
+});
