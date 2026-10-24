@@ -1,4 +1,5 @@
 import { useChat } from '../context/ChatContext.jsx';
+import PresenceText from './PresenceText.jsx';
 
 export default function ChatHeader({ conversation }) {
   const { closeConversation } = useChat();
@@ -9,7 +10,9 @@ export default function ChatHeader({ conversation }) {
       </button>
       <div className="chat-header-title">
         <strong>{conversation.name}</strong>
-        <div className="muted small chat-header-status" />
+        <div className="muted small chat-header-status">
+          {conversation.type === 'direct' && conversation.otherUser && <PresenceText userId={conversation.otherUser.id} />}
+        </div>
       </div>
     </header>
   );

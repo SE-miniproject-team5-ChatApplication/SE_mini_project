@@ -1,4 +1,6 @@
 import { ChatProvider, useChat } from '../context/ChatContext.jsx';
+import { ContactsProvider } from '../context/ContactsContext.jsx';
+import { PresenceProvider } from '../context/PresenceContext.jsx';
 import Sidebar from '../components/Sidebar.jsx';
 import ChatPane from '../components/ChatPane.jsx';
 
@@ -16,8 +18,12 @@ function DashboardLayout() {
 
 export default function DashboardPage() {
   return (
-    <ChatProvider>
-      <DashboardLayout />
-    </ChatProvider>
+    <ContactsProvider>
+      <PresenceProvider>
+        <ChatProvider>
+          <DashboardLayout />
+        </ChatProvider>
+      </PresenceProvider>
+    </ContactsProvider>
   );
 }

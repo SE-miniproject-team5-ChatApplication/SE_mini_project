@@ -120,3 +120,5 @@ a { color: var(--accent); }
 .message-input-box { flex: 1; display: flex; flex-direction: column; }
 .ticks { letter-spacing: -3px; font-weight: 700; }
 .ticks-read { color: var(--accent); }
+.presence-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #b8c0cc; vertical-align: middle; }
+.presence-dot.online { background: var(--online); }
