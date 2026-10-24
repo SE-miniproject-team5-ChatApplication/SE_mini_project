@@ -21,6 +21,8 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/prop-types': 'off',
+      // NFR-SAFE-2: never inject raw HTML - message text must render as text.
+      'react/no-danger': 'error',
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },

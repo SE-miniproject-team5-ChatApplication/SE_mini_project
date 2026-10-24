@@ -1,4 +1,4 @@
-// Builds the Express application (component C2 - REST API Layer).
+﻿// Builds the Express application (component C2 - REST API Layer).
 // Route files in src/routes are loaded automatically: each one exports
 // { basePath, router }, so a new feature only adds a file and never edits this one.
 const fs = require('fs');
@@ -9,6 +9,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const config = require('./config');
 const logger = require('./utils/logger');
+const { sanitizeBody } = require('./middleware/sanitize');
 const { AppError, toErrorBody } = require('./utils/errors');
 
 function loadRoutes(app) {
@@ -34,6 +35,7 @@ function createApp() {
   app.use(helmet());
   app.use(cors({ origin: config.clientOrigin }));
   app.use(express.json({ limit: '100kb' }));
+  app.use(sanitizeBody);
   app.use((req, _res, next) => {
     req.id = crypto.randomUUID();
     next();
