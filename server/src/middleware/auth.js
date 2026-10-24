@@ -1,37 +1,50 @@
-// REST authentication (REQ-AUTH-7, NFR-SEC-1).
-// Same rules as authenticateSocket in sockets/index.js, for HTTP routes.
-// Use it on any route that needs a logged-in user:
-//   router.get('/me', requireAuth, handler)   -> handler can read req.user.id
-const { User } = require('../models');
+// REQ-AUTH-7 / NFR-SEC-1: every protected REST request must carry a valid,
+// unexpired JWT in "Authorization: Bearer <token>".
 const { verifyToken } = require('../utils/jwt');
 const { Errors } = require('../utils/errors');
-const { isRevoked } = require('../services/authService');
+const { User } = require('../models');
+
+// The only API routes a guest may call (NFR-SEC-1).
+const PUBLIC_ROUTES = [
+  ['POST', '/api/auth/register'],
+  ['POST', '/api/auth/login'],
+  ['GET', '/api/health'],
+];
+
+function isPublic(req) {
+  const fullPath = (req.baseUrl + req.path).replace(/\/+$/, '');
+  return PUBLIC_ROUTES.some(([method, path]) => method === req.method && path === fullPath);
+}
 
 async function requireAuth(req, _res, next) {
+  if (req.user) return next(); // already checked by the global guard
   try {
-    const header = req.get('authorization') || '';
+    const header = req.headers.authorization || '';
     const [scheme, token] = header.split(' ');
-    if (scheme !== 'Bearer' || !token) return next(Errors.unauthenticated());
+    if (scheme !== 'Bearer' || !token) throw Errors.unauthenticated();
 
     let payload;
     try {
-      payload = verifyToken(token); // fails if tampered, malformed or expired
+      payload = verifyToken(token);
     } catch {
-      return next(Errors.unauthenticated('Invalid or expired token'));
+      throw Errors.unauthenticated('Your session has expired. Please log in again.');
     }
 
-    // Logged out already? (REQ-AUTH-6)
-    if (await isRevoked(payload.jti)) return next(Errors.unauthenticated('Invalid or expired token'));
+    const user = await User.findById(payload.sub);
+    if (!user) throw Errors.unauthenticated();
 
-    // The account must still exist
-    const user = await User.findById(payload.sub).select('_id username').lean();
-    if (!user) return next(Errors.unauthenticated('Invalid or expired token'));
-
-    req.user = { id: String(user._id), username: user.username, jti: payload.jti, exp: payload.exp };
-    return next();
+    req.user = user;
+    req.userId = String(user._id);
+    req.token = { jti: payload.jti, exp: payload.exp };
+    next();
   } catch (err) {
-    return next(err);
+    next(err);
   }
 }
 
-module.exports = { requireAuth };
+function requireAuthExceptPublic(req, res, next) {
+  if (req.method === 'OPTIONS' || isPublic(req)) return next();
+  return requireAuth(req, res, next);
+}
+
+module.exports = { requireAuth, requireAuthExceptPublic, PUBLIC_ROUTES };

@@ -2,6 +2,7 @@
 const { Message, Conversation } = require('../models');
 const { MAX_CONTENT_LENGTH } = require('../models/Message');
 const { Errors } = require('../utils/errors');
+const { sanitizeText } = require('../middleware/sanitize');
 
 // REQ-MSG-4 / BR-5: no empty messages, at most 2000 characters.
 function validateContent(content) {
@@ -31,7 +32,8 @@ function serialize(message) {
 // REQ-MSG-3 / NFR-SAFE-1: this function resolves only after MongoDB has
 // confirmed the insert, and callers send the acknowledgement only after it
 // resolves - so an acknowledged message is always in the database.
-async function createMessage({ conversationId, senderId, content, clientMsgId }) {
+async function createMessage({ conversationId, senderId, content: rawContent, clientMsgId }) {
+  const content = sanitizeText(rawContent);
   validateContent(content);
   const message = await Message.create({
     conversationId,
