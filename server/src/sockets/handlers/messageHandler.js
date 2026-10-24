@@ -2,10 +2,12 @@
 //   message:send {conversationId, content, clientMsgId}
 //     -> acknowledgement callback {ok, clientMsgId, messageId, status, sentAt, message}
 //     -> also emits message:ack (or error:event) to the sending socket
+//   message:new  (server -> every other socket in room conv:<id>)
 const { assertMember } = require('../../services/membershipService');
 const messageService = require('../../services/messageService');
 const { AppError, toErrorBody } = require('../../utils/errors');
 const logger = require('../../utils/logger');
+const bus = require('../../utils/eventBus');
 
 function register(_io, socket) {
   socket.on('message:send', async (payload, ack) => {
@@ -21,8 +23,13 @@ function register(_io, socket) {
         clientMsgId,
       });
       const data = { clientMsgId, messageId: String(message._id), status: message.status, sentAt: message.sentAt };
+      const serialized = messageService.serialize(message);
       socket.emit('message:ack', data);
-      reply({ ok: true, ...data, message: messageService.serialize(message) });
+      reply({ ok: true, ...data, message: serialized });
+      // REQ-MSG-2: real-time delivery to the recipient's open connection(s)
+      // (and to the sender's other tabs). Offline users get it later (REQ-MSG-6).
+      socket.to(`conv:${conversationId}`).emit('message:new', serialized);
+      bus.emit('message:created', { message: serialized });
     } catch (err) {
       if (!(err instanceof AppError)) logger.error({ err, event: 'message:send' }, 'message not stored');
       const { error } = toErrorBody(err);
