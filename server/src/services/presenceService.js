@@ -3,7 +3,9 @@
 const { Contact, User } = require('../models');
 const { emitToUser } = require('../utils/realtime');
 
-const online = new Set(); // userIds with an open connection
+// REQ-PRS-4: userId -> number of open connections (tabs/devices).
+// A user is online while this count is above zero.
+const sessions = new Map();
 
 // Who should hear about this user's presence: people who have them as a
 // contact, and the user's own contacts (REQ-PRS-1).
@@ -21,17 +23,31 @@ async function broadcast(userId, update) {
 }
 
 function isOnline(userId) {
-  return online.has(String(userId));
+  return sessions.has(String(userId));
 }
 
+function sessionCount(userId) {
+  return sessions.get(String(userId)) || 0;
+}
+
+// Broadcast "online" only for the first connection.
 async function userConnected(userId) {
-  online.add(String(userId));
-  await broadcast(userId, { status: 'online' });
+  const key = String(userId);
+  const count = sessionCount(key) + 1;
+  sessions.set(key, count);
+  if (count === 1) await broadcast(userId, { status: 'online' });
 }
 
+// Broadcast "offline" only when the last connection closes.
 // REQ-PRS-2: remember when the user was last online.
 async function userDisconnected(userId) {
-  online.delete(String(userId));
+  const key = String(userId);
+  const count = sessionCount(key) - 1;
+  if (count > 0) {
+    sessions.set(key, count);
+    return;
+  }
+  sessions.delete(key);
   const lastSeen = new Date();
   await User.updateOne({ _id: userId }, { lastSeen });
   await broadcast(userId, { status: 'offline', lastSeen });
@@ -49,7 +65,7 @@ async function statusOf(userIds) {
 
 // Test helper: forget all in-memory state.
 function reset() {
-  online.clear();
+  sessions.clear();
 }
 
-module.exports = { audienceOf, isOnline, userConnected, userDisconnected, statusOf, reset };
+module.exports = { audienceOf, isOnline, sessionCount, userConnected, userDisconnected, statusOf, reset };
