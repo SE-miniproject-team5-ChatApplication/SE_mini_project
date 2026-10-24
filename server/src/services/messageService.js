@@ -17,6 +17,9 @@ function serialize(message) {
 }
 
 // REQ-MSG-1: store a text message sent by a member of the conversation.
+// REQ-MSG-3 / NFR-SAFE-1: this function resolves only after MongoDB has
+// confirmed the insert, and callers send the acknowledgement only after it
+// resolves - so an acknowledged message is always in the database.
 async function createMessage({ conversationId, senderId, content, clientMsgId }) {
   if (typeof content !== 'string') throw Errors.validation('Message text is required', 'content');
   const message = await Message.create({
