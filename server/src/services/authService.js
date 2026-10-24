@@ -1,4 +1,4 @@
-// Auth business logic (DD-AUTH). Routes call these; no Express code here.
+﻿// Auth business logic (DD-AUTH). Routes call these; no Express code here.
 const bcrypt = require('bcryptjs');
 const config = require('../config');
 const User = require('../models/User');
@@ -62,7 +62,19 @@ async function register(body) {
 // REQ-AUTH-4 (account lockout, REQ-AUTH-5, is planned for Sprint 2)
 async function login(body = {}) {
   const { identifier, password } = body;
-  if (typeof identifier !== 'string' || typeof password !== 'string' || !identifier.trim() || !password) {
+
+  if (
+    identifier === undefined ||
+    identifier === null ||
+    (typeof identifier === 'string' && !identifier.trim()) ||
+    password === undefined ||
+    password === null ||
+    password === ''
+  ) {
+    throw Errors.validation('Identifier and password are required', 'identifier');
+  }
+
+  if (typeof identifier !== 'string' || typeof password !== 'string') {
     throw Errors.invalidCredentials();
   }
 

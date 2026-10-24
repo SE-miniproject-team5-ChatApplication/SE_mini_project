@@ -10,6 +10,8 @@ const cors = require('cors');
 const config = require('./config');
 const logger = require('./utils/logger');
 const { AppError, toErrorBody } = require('./utils/errors');
+const { requireAuthExceptPublic } = require('./middleware/auth');
+const { sanitizeBody } = require('./middleware/sanitize');
 
 function loadRoutes(app) {
   const dir = path.join(__dirname, 'routes');
@@ -34,10 +36,14 @@ function createApp() {
   app.use(helmet());
   app.use(cors({ origin: config.clientOrigin }));
   app.use(express.json({ limit: '100kb' }));
+  app.use(sanitizeBody);
   app.use((req, _res, next) => {
     req.id = crypto.randomUUID();
     next();
   });
+
+  // NFR-SEC-1: deny by default - every /api route needs a login except the public list.
+  app.use('/api', requireAuthExceptPublic);
 
   loadRoutes(app);
 
