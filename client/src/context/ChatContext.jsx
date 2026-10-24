@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import { http } from '../api/http.js';
 import { useAuth } from './AuthContext.jsx';
 import { newClientMsgId } from '../utils/ids.js';
+import { useSocketEvent } from '../hooks/useSocketEvent.js';
 
 const ChatContext = createContext(null);
 
@@ -33,6 +34,11 @@ export function ChatProvider({ children }) {
       return { ...prev, [conversationId]: list };
     });
   }, []);
+
+  // REQ-MSG-2: messages pushed by the server in real time.
+  useSocketEvent('message:new', (message) => {
+    upsertMessages(message.conversationId, [message]);
+  });
 
   // Opens (or creates) the one-to-one conversation with a contact.
   const startDirectChat = useCallback(async (user) => {
