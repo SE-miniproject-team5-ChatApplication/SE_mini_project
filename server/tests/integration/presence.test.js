@@ -1,8 +1,10 @@
 const { describeDb, connectTestDb, clearTestDb, disconnectTestDb } = require('../helpers/db');
 const { startTestServer } = require('../helpers/server');
-const { connectClient, waitFor } = require('../helpers/socket');
+const { connectClient, waitFor, waitForMatch } = require('../helpers/socket');
 const { createDirectChat } = require('../helpers/chat');
 const presenceService = require('../../src/services/presenceService');
+const { User } = require('../../src/models');
+const request = require('supertest');
 
 describeDb('REQ-PRS-1 online/offline broadcast to contacts', () => {
   let srv;
@@ -33,5 +35,21 @@ describeDb('REQ-PRS-1 online/offline broadcast to contacts', () => {
     const offline = waitFor(sa, 'presence:update', 2000);
     sb.close();
     expect(await offline).toMatchObject({ userId: b.id, status: 'offline' });
+  });
+
+  test('TC-PRS-01 (REQ-PRS-2) last seen is stored and returned for offline users', async () => {
+    const { a, b } = await createDirectChat();
+    const sa = await connectClient(srv.url, a.token);
+    sockets.push(sa);
+    const sb = await connectClient(srv.url, b.token);
+    const offline = waitForMatch(sa, 'presence:update', (p) => p.userId === b.id && p.status === 'offline');
+    sb.close();
+    const update = await offline;
+    expect(update.lastSeen).toBeDefined();
+    expect((await User.findById(b.id)).lastSeen).toBeInstanceOf(Date);
+
+    const res = await request(srv.app).get('/api/presence').query({ ids: b.id }).set('Authorization', `Bearer ${a.token}`);
+    expect(res.body[0]).toMatchObject({ userId: b.id, status: 'offline' });
+    expect(res.body[0].lastSeen).toBeTruthy();
   });
 });

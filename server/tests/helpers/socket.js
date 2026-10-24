@@ -23,9 +23,26 @@ function waitFor(socket, event, timeoutMs = 3000) {
   });
 }
 
+// Waits for the first event whose payload matches predicate(payload).
+function waitForMatch(socket, event, predicate, timeoutMs = 3000) {
+  return new Promise((resolve, reject) => {
+    const listener = (payload) => {
+      if (!predicate(payload)) return;
+      clearTimeout(timer);
+      socket.off(event, listener);
+      resolve(payload);
+    };
+    const timer = setTimeout(() => {
+      socket.off(event, listener);
+      reject(new Error(`timeout waiting for matching ${event}`));
+    }, timeoutMs);
+    socket.on(event, listener);
+  });
+}
+
 // Emits an event and waits for the Socket.IO acknowledgement callback.
 function emitAck(socket, event, payload, timeoutMs = 3000) {
   return socket.timeout(timeoutMs).emitWithAck(event, payload);
 }
 
-module.exports = { connectClient, waitFor, emitAck };
+module.exports = { connectClient, waitFor, waitForMatch, emitAck };

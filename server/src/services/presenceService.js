@@ -1,6 +1,6 @@
 // Presence Service (component C7). Online state is kept in memory (allowed by
 // NFR-QA-7: handlers are stateless apart from connection maps).
-const { Contact } = require('../models');
+const { Contact, User } = require('../models');
 const { emitToUser } = require('../utils/realtime');
 
 const online = new Set(); // userIds with an open connection
@@ -29,13 +29,22 @@ async function userConnected(userId) {
   await broadcast(userId, { status: 'online' });
 }
 
+// REQ-PRS-2: remember when the user was last online.
 async function userDisconnected(userId) {
   online.delete(String(userId));
-  await broadcast(userId, { status: 'offline' });
+  const lastSeen = new Date();
+  await User.updateOne({ _id: userId }, { lastSeen });
+  await broadcast(userId, { status: 'offline', lastSeen });
 }
 
-function statusOf(userIds) {
-  return userIds.map((id) => ({ userId: String(id), status: isOnline(id) ? 'online' : 'offline' }));
+async function statusOf(userIds) {
+  const users = await User.find({ _id: { $in: userIds } }).select('lastSeen').lean();
+  const lastSeen = new Map(users.map((u) => [String(u._id), u.lastSeen]));
+  return userIds.map((id) => ({
+    userId: String(id),
+    status: isOnline(id) ? 'online' : 'offline',
+    lastSeen: lastSeen.get(String(id)) || null,
+  }));
 }
 
 // Test helper: forget all in-memory state.
