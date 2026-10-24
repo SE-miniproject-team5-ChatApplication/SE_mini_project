@@ -12,7 +12,6 @@ const logger = require('./utils/logger');
 const { sanitizeBody } = require('./middleware/sanitize');
 const { AppError, toErrorBody } = require('./utils/errors');
 const { requireAuthExceptPublic } = require('./middleware/auth');
-const { sanitizeBody } = require('./middleware/sanitize');
 
 function loadRoutes(app) {
   const dir = path.join(__dirname, 'routes');
