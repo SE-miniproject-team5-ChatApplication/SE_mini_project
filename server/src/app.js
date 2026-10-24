@@ -11,6 +11,8 @@ const config = require('./config');
 const logger = require('./utils/logger');
 const { sanitizeBody } = require('./middleware/sanitize');
 const { AppError, toErrorBody } = require('./utils/errors');
+const { requireAuthExceptPublic } = require('./middleware/auth');
+const { sanitizeBody } = require('./middleware/sanitize');
 
 function loadRoutes(app) {
   const dir = path.join(__dirname, 'routes');
@@ -40,6 +42,9 @@ function createApp() {
     req.id = crypto.randomUUID();
     next();
   });
+
+  // NFR-SEC-1: deny by default - every /api route needs a login except the public list.
+  app.use('/api', requireAuthExceptPublic);
 
   loadRoutes(app);
 

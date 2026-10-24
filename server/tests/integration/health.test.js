@@ -11,9 +11,10 @@ describe('Smoke test - health endpoint', () => {
   });
 
   test('SMOKE unknown API route returns the standard error format', async () => {
+    // Without a token the global guard answers first (NFR-SEC-1).
     const res = await request(app).get('/api/does-not-exist');
-    expect(res.status).toBe(404);
-    expect(res.body.error.code).toBe('NOT_FOUND');
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHENTICATED');
     expect(res.body.error.requestId).toBeDefined();
   });
 });
