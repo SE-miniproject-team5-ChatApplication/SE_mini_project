@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { usePresence } from '../context/PresenceContext.jsx';
+import { formatDateTime } from '../utils/format.js';
 
-// "online" / "offline" line under a contact's name in the chat header.
+// "online" or "last seen 10:42" under a contact's name (REQ-PRS-1, REQ-PRS-2).
 export default function PresenceText({ userId }) {
   const { presence, track } = usePresence();
   useEffect(() => {
@@ -9,5 +10,6 @@ export default function PresenceText({ userId }) {
   }, [userId, track]);
   const p = presence[userId];
   if (!p) return null;
-  return <span>{p.status === 'online' ? 'online' : 'offline'}</span>;
+  if (p.status === 'online') return <span>online</span>;
+  return <span>{p.lastSeen ? `last seen ${formatDateTime(p.lastSeen)}` : 'offline'}</span>;
 }
