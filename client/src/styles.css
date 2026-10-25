@@ -131,3 +131,4 @@ a { color: var(--accent); }
 .conversation-name { font-weight: 600; }
 .conversation-preview { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 .conversation-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.attachment { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }

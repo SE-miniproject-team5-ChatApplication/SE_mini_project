@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useChat } from '../context/ChatContext.jsx';
+import AttachButton from './AttachButton.jsx';
 
 const MAX_LENGTH = 2000; // REQ-MSG-4
 
 // Enter sends, Shift+Enter adds a new line (SRS 3.1 keyboard support).
 export default function MessageInput() {
-  const { sendMessage } = useChat();
+  const { sendMessage, activeConversation } = useChat();
   const [text, setText] = useState('');
+  const [error, setError] = useState('');
   const tooLong = text.length > MAX_LENGTH;
   const canSend = text.trim().length > 0 && !tooLong;
 
@@ -23,6 +25,13 @@ export default function MessageInput() {
     }
   };
 
+  // REQ-FIL-1: the uploaded file is sent as a message (with any typed text).
+  const onUploaded = (attachment) => {
+    setError('');
+    sendMessage(tooLong ? '' : text, attachment);
+    setText('');
+  };
+
   return (
     <form
       className="message-input"
@@ -31,7 +40,9 @@ export default function MessageInput() {
         submit();
       }}
     >
+      <AttachButton conversationId={activeConversation.id} onUploaded={onUploaded} onError={setError} />
       <div className="message-input-box">
+        {error && <div className="field-error small">{error}</div>}
         <textarea
           aria-label="Message"
           placeholder="Type a message"

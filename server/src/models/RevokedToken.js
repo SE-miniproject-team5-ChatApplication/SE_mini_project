@@ -1,5 +1,5 @@
-// Logged-out tokens (REQ-AUTH-6). A token id (jti) listed here is rejected
-// until the token would have expired anyway; MongoDB then deletes the row itself.
+// Tokens that were logged out before they expired (REQ-AUTH-6). MongoDB
+// deletes each entry automatically once the token would have expired anyway.
 const mongoose = require('mongoose');
 
 const revokedTokenSchema = new mongoose.Schema({
@@ -8,7 +8,6 @@ const revokedTokenSchema = new mongoose.Schema({
   expiresAt: { type: Date, required: true },
 });
 
-// TTL index: MongoDB removes each row once expiresAt has passed
 revokedTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model('RevokedToken', revokedTokenSchema);

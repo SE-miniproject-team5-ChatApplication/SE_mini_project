@@ -1,137 +1,47 @@
-
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useChat } from '../context/ChatContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useHistory } from '../hooks/useHistory.js';
 import MessageBubble from './MessageBubble.jsx';
 
+// Scrollable history. New messages keep the view pinned to the bottom;
+// scrolling to the top loads older messages without jumping (REQ-HIS-2).
 export default function MessageList() {
-  const {
-    activeConversation,
-    messages,
-    loadOlderMessages,
-    isLoadingMessages,
-    isLoadingOlderMessages,
-    hasMoreMessages,
-    messageHistoryError,
-  } = useChat();
-
+  const { messages, activeConversation } = useChat();
   const { user } = useAuth();
-
-  const listRef = useRef(null);
+  const { loading, hasMore, loadOlder } = useHistory(activeConversation?.id);
+  const boxRef = useRef(null);
   const bottomRef = useRef(null);
-  const previousConversationIdRef = useRef(null);
-  const previousMessageCountRef = useRef(0);
-  const previousScrollHeightRef = useRef(0);
-  const shouldRestoreScrollRef = useRef(false);
-  const shouldScrollToBottomRef = useRef(false);
-  const loadingOlderRef = useRef(false);
+  const restore = useRef(null);
+  const lastKey = messages.length ? messages[messages.length - 1].clientMsgId || messages[messages.length - 1].id : null;
 
-  const conversationId = activeConversation?.id;
-
-  const handleScroll = useCallback(() => {
-    const list = listRef.current;
-
-    if (!list || !conversationId) return;
-    if (loadingOlderRef.current || isLoadingOlderMessages) return;
-    if (isLoadingMessages || !hasMoreMessages) return;
-
-    if (list.scrollTop <= 40) {
-      loadingOlderRef.current = true;
-      previousScrollHeightRef.current = list.scrollHeight;
-      shouldRestoreScrollRef.current = true;
-
-      Promise.resolve(loadOlderMessages(conversationId)).finally(() => {
-        loadingOlderRef.current = false;
-      });
-    }
-  }, [
-    conversationId,
-    hasMoreMessages,
-    isLoadingMessages,
-    isLoadingOlderMessages,
-    loadOlderMessages,
-  ]);
-
-  // Reset scroll handling when switching conversations.
   useEffect(() => {
-    if (previousConversationIdRef.current !== conversationId) {
-      previousConversationIdRef.current = conversationId;
-      previousMessageCountRef.current = 0;
-      shouldRestoreScrollRef.current = false;
-      shouldScrollToBottomRef.current = true;
-    }
-  }, [conversationId]);
+    bottomRef.current?.scrollIntoView({ block: 'end' });
+  }, [lastKey, activeConversation?.id]);
 
-  // Preserve the viewport when older messages are prepended.
+  // After older messages are added on top, keep the same message under the eyes.
   useLayoutEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-
-    if (shouldRestoreScrollRef.current && !isLoadingOlderMessages) {
-      const addedHeight =
-        list.scrollHeight - previousScrollHeightRef.current;
-
-      if (addedHeight > 0) {
-        list.scrollTop += addedHeight;
-      }
-
-      shouldRestoreScrollRef.current = false;
-    } else if (
-      shouldScrollToBottomRef.current &&
-      !isLoadingMessages
-    ) {
-      bottomRef.current?.scrollIntoView({ block: 'end' });
-      shouldScrollToBottomRef.current = false;
-    } else if (
-      messages.length > previousMessageCountRef.current &&
-      !isLoadingOlderMessages
-    ) {
-      // Keep new messages visible when the user is already near the bottom.
-      const distanceFromBottom =
-        list.scrollHeight - list.scrollTop - list.clientHeight;
-
-      if (distanceFromBottom < 150) {
-        bottomRef.current?.scrollIntoView({ block: 'end' });
-      }
+    if (restore.current !== null && boxRef.current) {
+      boxRef.current.scrollTop = boxRef.current.scrollHeight - restore.current;
+      restore.current = null;
     }
+  }, [messages.length]);
 
-    previousMessageCountRef.current = messages.length;
-  }, [messages, isLoadingMessages, isLoadingOlderMessages]);
+  const onScroll = async (e) => {
+    if (e.currentTarget.scrollTop > 40 || !hasMore || loading) return;
+    const box = e.currentTarget;
+    restore.current = box.scrollHeight - box.scrollTop;
+    const added = await loadOlder();
+    if (!added) restore.current = null;
+  };
 
   return (
-    <div
-      className="message-list"
-      ref={listRef}
-      onScroll={handleScroll}
-    >
-      {isLoadingMessages && messages.length === 0 && (
-        <p className="muted empty-hint">Loading messages...</p>
-      )}
-
-      {messageHistoryError && (
-        <p className="muted empty-hint" role="alert">
-          {messageHistoryError}
-        </p>
-      )}
-
-      {hasMoreMessages && (
-        <div className="history-status">
-          {isLoadingOlderMessages ? 'Loading older messages...' : null}
-        </div>
-      )}
-
-      {!isLoadingMessages && messages.length === 0 && !messageHistoryError && (
-        <p className="muted empty-hint">No messages yet. Say hello!</p>
-      )}
-
-      {messages.map((message) => (
-        <MessageBubble
-          key={message.clientMsgId || message.id}
-          message={message}
-          mine={message.mine || message.senderId === user?.id}
-        />
+    <div className="message-list" ref={boxRef} onScroll={onScroll}>
+      {loading && <p className="muted small empty-hint">Loading…</p>}
+      {!loading && messages.length === 0 && <p className="muted empty-hint">No messages yet. Say hello!</p>}
+      {messages.map((m) => (
+        <MessageBubble key={m.clientMsgId || m.id} message={m} mine={m.mine || m.senderId === user?.id} />
       ))}
-
       <div ref={bottomRef} />
     </div>
   );

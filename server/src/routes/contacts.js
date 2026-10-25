@@ -1,38 +1,35 @@
-// Contact endpoints (SAD 4.3.2). Every route here needs a logged-in user.
+// Contact list endpoints (SAD 4.3.2, REQ-PRO-4).
 const express = require('express');
+const asyncHandler = require('../utils/asyncHandler');
 const { requireAuth } = require('../middleware/auth');
 const userService = require('../services/userService');
 
 const router = express.Router();
 router.use(requireAuth);
 
-// GET /api/contacts
-router.get('/', async (req, res, next) => {
-  try {
-    res.json(await userService.listContacts(req.user.id));
-  } catch (err) {
-    next(err);
-  }
-});
+// GET /api/contacts -> [user]
+router.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    res.json(await userService.listContacts(req.userId));
+  })
+);
 
-// POST /api/contacts  { contactUserId }
-router.post('/', async (req, res, next) => {
-  try {
-    const contact = await userService.addContact(req.user.id, req.body && req.body.contactUserId);
-    res.status(201).json({ contact });
-  } catch (err) {
-    next(err);
-  }
-});
+// POST /api/contacts {contactUserId} -> 201 user
+router.post(
+  '/',
+  asyncHandler(async (req, res) => {
+    res.status(201).json(await userService.addContact(req.userId, (req.body || {}).contactUserId));
+  })
+);
 
-// DELETE /api/contacts/:id   (id = the contact's user id)
-router.delete('/:id', async (req, res, next) => {
-  try {
-    await userService.removeContact(req.user.id, req.params.id);
+// DELETE /api/contacts/:id -> 204
+router.delete(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    await userService.removeContact(req.userId, req.params.id);
     res.status(204).end();
-  } catch (err) {
-    next(err);
-  }
-});
+  })
+);
 
 module.exports = { basePath: '/api/contacts', router };

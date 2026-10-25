@@ -1,6 +1,7 @@
 // Creates users directly in the database for tests and returns a valid token.
 const { User } = require('../../src/models');
 const { signToken } = require('../../src/utils/jwt');
+const { hashPassword } = require('../../src/services/authService');
 
 let counter = 0;
 
@@ -10,7 +11,8 @@ async function createUser(overrides = {}) {
   const user = await User.create({
     username,
     email: overrides.email || `${username}@test.com`,
-    passwordHash: overrides.passwordHash || 'not-a-real-hash',
+    // Pass { password } when the test needs to log in with it (hashing is slow).
+    passwordHash: overrides.password ? await hashPassword(overrides.password) : 'not-a-real-hash',
     displayName: overrides.displayName || username,
   });
   const { token, jti } = signToken(user);

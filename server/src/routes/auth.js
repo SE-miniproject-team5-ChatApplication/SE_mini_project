@@ -1,48 +1,38 @@
-// Auth endpoints (SAD 4.3.1). Thin: all logic is in authService.
+// REST endpoints of the Auth component (SAD 4.3.1).
 const express = require('express');
+const asyncHandler = require('../utils/asyncHandler');
 const authService = require('../services/authService');
 const { requireAuth } = require('../middleware/auth');
 
-async function requireActiveToken(req, res, next) {
-  try {
-    if (await authService.isRevoked(req.token && req.token.jti)) {
-      return next(require('../utils/errors').Errors.unauthenticated());
-    }
-    return next();
-  } catch (err) {
-    return next(err);
-  }
-}
-
 const router = express.Router();
 
-// POST /api/auth/register
-router.post('/register', async (req, res, next) => {
-  try {
-    const result = await authService.register(req.body);
-    res.status(201).json(result);
-  } catch (err) {
-    next(err);
-  }
-});
+// POST /api/auth/register  {username, email, password} -> 201 {userId, username}
+router.post(
+  '/register',
+  asyncHandler(async (req, res) => {
+    const { username, email, password } = req.body || {};
+    const user = await authService.register({ username, email, password });
+    res.status(201).json({ userId: String(user._id), username: user.username });
+  })
+);
 
-// POST /api/auth/login
-router.post('/login', async (req, res, next) => {
-  try {
-    const result = await authService.login(req.body);
-    res.json(result);
-  } catch (err) {
-    next(err);
-  }
-});
+// POST /api/auth/login  {identifier, password} -> 200 {token, expiresIn, user}
+router.post(
+  '/login',
+  asyncHandler(async (req, res) => {
+    const { identifier, password } = req.body || {};
+    res.json(await authService.login({ identifier, password }));
+  })
+);
 
-// POST /api/auth/logout
-router.post('/logout', requireAuth, requireActiveToken, async (req, res, next) => {
-  try {
-    await authService.logout({ id: req.userId, ...req.token });
+// POST /api/auth/logout -> 204
+router.post(
+  '/logout',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    await authService.logout(req.userId, req.token);
     res.status(204).end();
-  } catch (err) {
-    next(err);
-  }
-});
+  })
+);
+
 module.exports = { basePath: '/api/auth', router };

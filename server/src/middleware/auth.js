@@ -2,7 +2,7 @@
 // unexpired JWT in "Authorization: Bearer <token>".
 const { verifyToken } = require('../utils/jwt');
 const { Errors } = require('../utils/errors');
-const { User } = require('../models');
+const { User, RevokedToken } = require('../models');
 
 // The only API routes a guest may call (NFR-SEC-1).
 const PUBLIC_ROUTES = [
@@ -28,6 +28,11 @@ async function requireAuth(req, _res, next) {
       payload = verifyToken(token);
     } catch {
       throw Errors.unauthenticated('Your session has expired. Please log in again.');
+    }
+
+    // A logged-out token is refused even before it expires (REQ-AUTH-6).
+    if (payload.jti && (await RevokedToken.exists({ jti: payload.jti }))) {
+      throw Errors.unauthenticated('You have been logged out. Please log in again.');
     }
 
     const user = await User.findById(payload.sub);
