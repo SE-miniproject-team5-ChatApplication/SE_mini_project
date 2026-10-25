@@ -1,69 +1,58 @@
-﻿import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { http, apiError } from '../api/http.js';
-import { useChat } from '../context/ChatContext.jsx';
+import { useDebounce } from '../hooks/useDebounce.js';
 
-export default function UserSearch() {
+// REQ-PRO-3: search other users by part of their username or display name.
+export default function UserSearch({ renderActions }) {
   const [query, setQuery] = useState('');
-  const [users, setUsers] = useState([]);
+  const [results, setResults] = useState([]);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { startDirectChat } = useChat();
+  const debounced = useDebounce(query.trim());
 
-  const search = async (event) => {
-    event.preventDefault();
-    if (!query.trim()) {
-      setUsers([]);
+  useEffect(() => {
+    if (debounced.length < 2) {
+      setResults([]);
       setError('');
-      return;
+      return undefined;
     }
-
-    setLoading(true);
-    setError('');
-    try {
-      const { data } = await http.get('/users/search', {
-        params: { q: query.trim() },
-      });
-      setUsers((Array.isArray(data) ? data : data.users || []).map((u) => ({ ...u, id: u.id || u.userId })));
-    } catch (err) {
-      setError(apiError(err).message);
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    let cancelled = false;
+    http
+      .get('/users/search', { params: { q: debounced } })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setResults(data);
+          setError('');
+        }
+      })
+      .catch((err) => !cancelled && setError(apiError(err).message));
+    return () => {
+      cancelled = true;
+    };
+  }, [debounced]);
 
   return (
-    <section className="user-search">
-      <form onSubmit={search}>
-        <label htmlFor="user-search-input">Find users</label>
-        <div className="search-row">
-          <input
-            id="user-search-input"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by username"
-          />
-          <button className="btn btn-small" type="submit" disabled={loading}>
-            {loading ? 'Searching…' : 'Search'}
-          </button>
-        </div>
-      </form>
-
-      {error && <p role="alert" className="error-text">{error}</p>}
-
-      {users.map((user) => (
-        <div className="contact-row" key={user.id}>
-          <span>{user.displayName || user.username || user.id}</span>
-          <button
-            type="button"
-            className="btn btn-small"
-            onClick={() => startDirectChat(user).catch((err) => setError(apiError(err).message))}
-          >
-            Chat
-          </button>
-        </div>
-      ))}
-    </section>
+    <div className="sidebar-section">
+      <input
+        className="search-input"
+        type="search"
+        placeholder="Search people"
+        aria-label="Search people"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      {error && <div className="field-error">{error}</div>}
+      {debounced.length >= 2 && results.length === 0 && !error && <div className="muted small">No users found.</div>}
+      <ul className="plain-list">
+        {results.map((u) => (
+          <li key={u.id} className="list-row">
+            <div>
+              <div>{u.displayName}</div>
+              <div className="muted small">@{u.username}</div>
+            </div>
+            {renderActions && renderActions(u)}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
-

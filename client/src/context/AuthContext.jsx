@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { tokenStore } from '../api/tokenStore.js';
 import { createSocket } from '../api/socket.js';
+import { http } from '../api/http.js';
 
 const AuthContext = createContext(null);
 
@@ -23,7 +24,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  // REQ-AUTH-6: tell the server to revoke this token, then forget it locally.
+  // Clearing the token also closes the socket (see the effect below).
   const logout = useCallback(async () => {
+    try {
+      await http.post('/auth/logout');
+    } catch {
+      // Even if the server cannot be reached, the local session is cleared.
+    }
     clearSession();
   }, [clearSession]);
 

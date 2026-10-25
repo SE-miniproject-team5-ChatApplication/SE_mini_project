@@ -1,70 +1,58 @@
-﻿// User search and contacts (DD-PRO). Routes call these; no Express code here.
-const mongoose = require('mongoose');
-const User = require('../models/User');
-const Contact = require('../models/Contact');
+// User Service (component C5): profile, user search, contacts.
+const { User, Contact } = require('../models');
 const { Errors } = require('../utils/errors');
+const { assertId } = require('../utils/ids');
 
-const SEARCH_LIMIT = 20;
-
-// Treat the search text as plain text, not as a regex pattern (NFR-SEC-5)
+// Escapes characters that have a special meaning in regular expressions, so a
+// search for "a.b" or "(" is treated as plain text (also blocks ReDoS input).
 function escapeRegex(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// REQ-PRO-3: partial, case-insensitive search on username or display name
-async function searchUsers(currentUserId, q) {
-  if (typeof q !== 'string' || q.trim().length < 2 || q.length > 50) {
-    throw Errors.validation('Search text must be 2-50 characters', 'q');
-  }
-  const pattern = new RegExp(escapeRegex(q.trim()), 'i');
+// REQ-PRO-3: partial, case-insensitive search by username or display name.
+async function searchUsers(query, currentUserId) {
+  const q = typeof query === 'string' ? query.trim() : '';
+  if (q.length < 2) throw Errors.validation('Type at least 2 characters to search', 'q');
+  if (q.length > 40) throw Errors.validation('Search text is too long', 'q');
+  const pattern = new RegExp(escapeRegex(q), 'i');
   const users = await User.find({
     _id: { $ne: currentUserId },
     $or: [{ username: pattern }, { displayName: pattern }],
   })
-    .select('username displayName')
     .sort({ username: 1 })
-    .limit(SEARCH_LIMIT)
-    .lean();
-
-  return users.map((u) => ({ userId: String(u._id), username: u.username, displayName: u.displayName }));
+    .limit(20);
+  return users.map((u) => u.toPublic());
 }
 
-// REQ-PRO-4: list my contacts (public profile fields only)
+// REQ-PRO-4: contact list ------------------------------------------------------
+
 async function listContacts(userId) {
-  const rows = await Contact.find({ userId }).sort({ createdAt: 1 }).populate('contactUserId');
-  return rows.filter((r) => r.contactUserId).map((r) => r.contactUserId.toPublic());
+  const contacts = await Contact.find({ userId }).populate('contactUserId').sort({ createdAt: 1 });
+  return contacts.filter((c) => c.contactUserId).map((c) => c.contactUserId.toPublic());
 }
 
-// REQ-PRO-4: add a contact; not myself, not twice
 async function addContact(userId, contactUserId) {
-  if (typeof contactUserId !== 'string' || !mongoose.isValidObjectId(contactUserId)) {
-    throw Errors.validation('A valid contactUserId is required', 'contactUserId');
-  }
-  if (contactUserId === String(userId)) {
-    throw Errors.validation('You cannot add yourself as a contact', 'contactUserId');
-  }
-  const target = await User.findById(contactUserId);
-  if (!target) throw Errors.notFound('User not found');
-
+  assertId(contactUserId, 'contactUserId');
+  if (String(userId) === contactUserId) throw Errors.validation('You cannot add yourself as a contact', 'contactUserId');
+  const other = await User.findById(contactUserId);
+  if (!other) throw Errors.notFound('User not found');
   try {
     await Contact.create({ userId, contactUserId });
   } catch (err) {
     if (err.code === 11000) throw Errors.conflict('This user is already in your contacts', 'contactUserId');
     throw err;
   }
-  return target.toPublic();
+  return other.toPublic();
 }
 
-// REQ-PRO-4: remove a contact
 async function removeContact(userId, contactUserId) {
-  if (!mongoose.isValidObjectId(contactUserId)) throw Errors.notFound('This user is not in your contacts');
-  const { deletedCount } = await Contact.deleteOne({ userId, contactUserId });
-  if (!deletedCount) throw Errors.notFound('This user is not in your contacts');
+  assertId(contactUserId, 'contactUserId');
+  const result = await Contact.deleteOne({ userId, contactUserId });
+  if (result.deletedCount === 0) throw Errors.notFound('This user is not in your contacts');
 }
 
-
-// Check whether a user has added the other user to their contacts.
-async function isContact(userId, contactUserId) {
-  return Boolean(await Contact.exists({ userId, contactUserId }));
+async function isContact(userId, otherUserId) {
+  return Boolean(await Contact.exists({ userId, contactUserId: otherUserId }));
 }
-module.exports = { searchUsers, listContacts, addContact, removeContact, isContact, SEARCH_LIMIT };
+
+module.exports = { escapeRegex, searchUsers, listContacts, addContact, removeContact, isContact };

@@ -1,5 +1,5 @@
 // Socket events for messages (SAD 4.3.6).
-//   message:send {conversationId, content, clientMsgId}
+//   message:send {conversationId, content, clientMsgId, attachmentId?}
 //     -> acknowledgement callback {ok, clientMsgId, messageId, status, sentAt, message}
 //     -> also emits message:ack (or error:event) to the sending socket
 //   message:new  (server -> every other socket in room conv:<id>)
@@ -12,7 +12,7 @@ const { createSerialQueue } = require('../../utils/serialQueue');
 
 async function handleSend(socket, payload, ack) {
   const reply = typeof ack === 'function' ? ack : () => {};
-  const { conversationId, content, clientMsgId } = payload || {};
+  const { conversationId, content, clientMsgId, attachmentId } = payload || {};
   try {
     await assertMember(socket.data.userId, conversationId);
     // REQ-MSG-3: persist first; nothing below runs if the write fails.
@@ -21,6 +21,7 @@ async function handleSend(socket, payload, ack) {
       senderId: socket.data.userId,
       content,
       clientMsgId,
+      attachmentId,
     });
     const data = { clientMsgId, messageId: String(message._id), status: message.status, sentAt: message.sentAt };
     const serialized = messageService.serialize(message);
