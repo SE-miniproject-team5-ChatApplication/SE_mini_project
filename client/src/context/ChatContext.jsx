@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { http } from '../api/http.js';
 import { useAuth } from './AuthContext.jsx';
 import { newClientMsgId } from '../utils/ids.js';
@@ -43,6 +43,23 @@ export function ChatProvider({ children }) {
       socket.emit('message:delivered', { messageId: message.id });
     }
   });
+
+  // REQ-RCP-3: while a conversation is open and the window is visible, tell the
+  // server that the messages on screen were read (again whenever new ones arrive).
+  const activeId = activeConversation?.id;
+  const activeList = activeId ? messagesByConv[activeId] : null;
+  const unreadFromOthers = (activeList || []).filter(
+    (m) => m.id && m.senderId && m.senderId !== user?.id && !(m.readBy || []).some((r) => r.userId === user?.id)
+  ).length;
+  useEffect(() => {
+    if (!socket || !activeId) return undefined;
+    const report = () => {
+      if (document.visibilityState === 'visible') socket.emit('message:read', { conversationId: activeId });
+    };
+    report();
+    document.addEventListener('visibilitychange', report);
+    return () => document.removeEventListener('visibilitychange', report);
+  }, [socket, activeId, unreadFromOthers]);
 
   // Opens (or creates) the one-to-one conversation with a contact.
   const startDirectChat = useCallback(async (user) => {
