@@ -141,3 +141,4 @@ a { color: var(--accent); }
 .connection-banner { padding: 6px 14px; background: #fff4ce; border-bottom: 1px solid #e3c55b; font-size: 14px; }
 .bubble-text.deleted { font-style: italic; color: var(--muted); }
 .link-btn { background: none; border: none; padding: 0; color: var(--muted); cursor: pointer; font-size: 12px; text-decoration: underline; }
+.typing { color: var(--online); font-style: italic; }

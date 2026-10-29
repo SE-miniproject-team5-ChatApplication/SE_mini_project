@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useChat } from '../context/ChatContext.jsx';
 import AttachButton from './AttachButton.jsx';
+import { useTypingEmitter } from '../hooks/useTypingEmitter.js';
 
 const MAX_LENGTH = 2000; // REQ-MSG-4
 
@@ -9,11 +10,13 @@ export default function MessageInput() {
   const { sendMessage, activeConversation } = useChat();
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+  const typing = useTypingEmitter(activeConversation.id); // REQ-PRS-3
   const tooLong = text.length > MAX_LENGTH;
   const canSend = text.trim().length > 0 && !tooLong;
 
   const submit = () => {
     if (!canSend) return;
+    typing.stop();
     sendMessage(text);
     setText('');
   };
@@ -48,7 +51,10 @@ export default function MessageInput() {
           placeholder="Type a message"
           rows={1}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            typing.onKeystroke();
+          }}
           onKeyDown={onKeyDown}
         />
         {text.length > MAX_LENGTH - 200 && (

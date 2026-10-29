@@ -1,5 +1,6 @@
 import { useChat } from '../context/ChatContext.jsx';
 import PresenceText from './PresenceText.jsx';
+import TypingIndicator from './TypingIndicator.jsx';
 
 export default function ChatHeader({ conversation }) {
   const { closeConversation } = useChat();
@@ -11,6 +12,7 @@ export default function ChatHeader({ conversation }) {
       <div className="chat-header-title">
         <strong>{conversation.name}</strong>
         <div className="muted small chat-header-status">
+          <TypingIndicator conversationId={conversation.id} />{' '}
           {conversation.type === 'direct' && conversation.otherUser && <PresenceText userId={conversation.otherUser.id} />}
         </div>
       </div>
