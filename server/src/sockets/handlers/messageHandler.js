@@ -4,6 +4,7 @@
 //     -> also emits message:ack (or error:event) to the sending socket
 //   message:new  (server -> every other socket in room conv:<id>)
 //   On connect, messages that arrived while the user was offline are sent as message:new.
+//   message:delete {messageId} -> ack {ok}; message:deleted {messageId, conversationId} to the room
 const { assertMember } = require('../../services/membershipService');
 const messageService = require('../../services/messageService');
 const { AppError, toErrorBody } = require('../../utils/errors');
@@ -43,11 +44,28 @@ async function handleSend(socket, payload, ack) {
   }
 }
 
-function register(_io, socket) {
+// REQ-MSG-8: delete own message; every participant sees "This message was deleted".
+async function handleDelete(io, socket, payload, ack) {
+  const reply = typeof ack === 'function' ? ack : () => {};
+  try {
+    const message = await messageService.deleteMessage(socket.data.userId, payload && payload.messageId);
+    const event = { messageId: String(message._id), conversationId: String(message.conversationId) };
+    io.to(`conv:${event.conversationId}`).emit('message:deleted', event);
+    reply({ ok: true, ...event });
+  } catch (err) {
+    if (!(err instanceof AppError)) logger.error({ err, event: 'message:delete' }, 'delete failed');
+    const { error } = toErrorBody(err);
+    socket.emit('error:event', { ...error, event: 'message:delete' });
+    reply({ ok: false, error });
+  }
+}
+
+function register(io, socket) {
   // REQ-MSG-5: one queue per connection keeps this sender's messages in order,
   // even when several are sent faster than the database answers.
   const queue = createSerialQueue();
   socket.on('message:send', (payload, ack) => queue(() => handleSend(socket, payload, ack)));
+  socket.on('message:delete', (payload, ack) => queue(() => handleDelete(io, socket, payload, ack)));
 }
 
 // REQ-MSG-6: deliver stored messages automatically when the recipient reconnects.

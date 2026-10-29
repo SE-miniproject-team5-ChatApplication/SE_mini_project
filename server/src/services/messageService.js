@@ -3,6 +3,7 @@ const { Message, Conversation, Attachment, Member } = require('../models');
 const { MAX_CONTENT_LENGTH } = require('../models/Message');
 const { Errors } = require('../utils/errors');
 const { sanitizeText } = require('../middleware/sanitize');
+const { isValidId } = require('../utils/ids');
 
 // REQ-MSG-4 / BR-5: no empty messages, at most 2000 characters.
 // A message with an attachment may have no text (Appendix B.2).
@@ -90,6 +91,27 @@ async function createMessage({ conversationId, senderId, content: rawContent, cl
   return message;
 }
 
+// REQ-MSG-8 / BR-4: a sender may delete only their own message. The record is
+// kept for audit; its content is hidden from everyone ("This message was deleted").
+async function deleteMessage(userId, messageId) {
+  if (!isValidId(messageId)) throw Errors.validation('Invalid messageId', 'messageId');
+  const message = await Message.findById(messageId);
+  if (!message) throw Errors.notFound('Message not found');
+  if (!message.senderId || String(message.senderId) !== String(userId)) {
+    throw Errors.forbidden('You can only delete your own messages');
+  }
+  if (message.status !== 'deleted') {
+    message.status = 'deleted';
+    message.deletedAt = new Date();
+    await message.save();
+    await Conversation.updateOne(
+      { _id: message.conversationId, 'lastMessage.messageId': message._id },
+      { 'lastMessage.preview': previewOf(message) }
+    );
+  }
+  return message;
+}
+
 async function findByClientMsgId(senderId, clientMsgId) {
   if (typeof clientMsgId !== 'string' || !clientMsgId) return null;
   const found = await Message.findOne({ senderId, clientMsgId: clientMsgId.slice(0, 64) }).populate('attachmentId');
@@ -116,4 +138,4 @@ async function pendingFor(userId, limit = 500) {
   return messages.map(serialize);
 }
 
-module.exports = { createMessage, serialize, previewOf, validateContent, pendingFor };
+module.exports = { createMessage, deleteMessage, serialize, previewOf, validateContent, pendingFor };
