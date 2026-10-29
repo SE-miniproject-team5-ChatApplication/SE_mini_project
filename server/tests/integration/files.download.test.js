@@ -11,7 +11,7 @@ const { startTestServer } = require('../helpers/server');
 const { createUser } = require('../helpers/factory');
 const { createDirectChat } = require('../helpers/chat');
 
-describe('REQ-FIL-4 attachment downloads', () => {
+describe('NFR-SAFE-3 secure attachment downloads', () => {
   let srv;
 
   beforeAll(async () => {
@@ -24,13 +24,15 @@ describe('REQ-FIL-4 attachment downloads', () => {
   });
 
   afterAll(async () => {
-    await srv.close();
+    if (srv) {
+      await srv.close();
+    }
     await disconnectTestDb();
   });
 
   async function uploadTextFile(token, conversationId) {
     const content = Buffer.from(
-      'REQ-FIL-4 download test content',
+      'NFR-SAFE-3 security test content',
       'utf8'
     );
 
@@ -38,13 +40,13 @@ describe('REQ-FIL-4 attachment downloads', () => {
       .post('/api/files')
       .set('Authorization', `Bearer ${token}`)
       .field('conversationId', conversationId)
-      .attach('file', content, 'download-test.txt');
+      .attach('file', content, 'security-test.txt');
 
     expect(response.status).toBe(201);
     return response.body.attachmentId;
   }
 
-  test('allows an authenticated conversation member to download an attachment', async () => {
+  test('serves an attachment with safe download headers and correct content', async () => {
     const { a, conversationId } = await createDirectChat();
     const attachmentId = await uploadTextFile(
       a.token,
@@ -56,18 +58,24 @@ describe('REQ-FIL-4 attachment downloads', () => {
       .set('Authorization', `Bearer ${a.token}`);
 
     expect(response.status).toBe(200);
+
     expect(response.headers['content-type']).toMatch(/text\/plain/);
+    expect(response.headers['content-disposition']).toMatch(/^attachment;/);
     expect(response.headers['content-disposition']).toContain(
-      'download-test.txt'
+      'security-test.txt'
     );
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.headers['cache-control']).toBe('private, no-store');
+
     expect(response.text).toBe(
-      'REQ-FIL-4 download test content'
+      'NFR-SAFE-3 security test content'
     );
   });
 
-  test('denies a user who is not a member of the attachment conversation', async () => {
+  test('denies downloads to a user outside the conversation', async () => {
     const { a, conversationId } = await createDirectChat();
     const outsider = await createUser();
+
     const attachmentId = await uploadTextFile(
       a.token,
       conversationId
@@ -80,8 +88,9 @@ describe('REQ-FIL-4 attachment downloads', () => {
     expect(response.status).toBe(403);
   });
 
-  test('rejects an unauthenticated download request', async () => {
+  test('rejects unauthenticated download requests', async () => {
     const { a, conversationId } = await createDirectChat();
+
     const attachmentId = await uploadTextFile(
       a.token,
       conversationId
@@ -93,7 +102,7 @@ describe('REQ-FIL-4 attachment downloads', () => {
     expect(response.status).toBe(401);
   });
 
-  test('returns 404 when the attachment does not exist', async () => {
+  test('returns 404 for a nonexistent attachment', async () => {
     const { a } = await createDirectChat();
 
     const response = await request(srv.app)
