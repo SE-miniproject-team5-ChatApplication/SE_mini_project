@@ -154,3 +154,4 @@ a { color: var(--accent); }
 .inline-form input, .inline-form select { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
 .badge-role { font-size: 12px; padding: 1px 6px; border-radius: 10px; background: var(--mine); color: var(--accent); }
 .dialog h3 { font-size: 15px; margin: 14px 0 4px; }
+.bubble-sender { font-size: 13px; font-weight: 600; color: var(--accent); }
