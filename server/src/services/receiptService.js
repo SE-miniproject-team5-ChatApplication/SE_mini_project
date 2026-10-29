@@ -58,4 +58,34 @@ function markDelivered(userId, messageId) {
   return addReceipt('deliveredTo', userId, messageId);
 }
 
-module.exports = { STATUS_RANK, canAdvance, computeStatus, markDelivered, addReceipt, refreshStatus };
+// REQ-RCP-3: the recipient has the conversation open and the message is shown.
+// With {conversationId} every unread message from others in it is marked read;
+// with {messageId} only that message. Returns the list of status changes.
+async function markRead(userId, { messageId, conversationId } = {}) {
+  let ids = [];
+  if (isValidId(conversationId)) {
+    if (!(await isMember(userId, conversationId))) return [];
+    const unread = await Message.find({
+      conversationId,
+      senderId: { $ne: userId },
+      type: { $ne: 'system' },
+      status: { $ne: 'deleted' },
+      'readBy.userId': { $ne: userId },
+    })
+      .sort({ sentAt: 1 })
+      .limit(500)
+      .select('_id')
+      .lean();
+    ids = unread.map((m) => m._id);
+  } else if (isValidId(messageId)) {
+    ids = [messageId];
+  }
+  const results = [];
+  for (const id of ids) {
+    const r = await addReceipt('readBy', userId, String(id));
+    if (r) results.push(r);
+  }
+  return results;
+}
+
+module.exports = { STATUS_RANK, canAdvance, computeStatus, markDelivered, markRead, addReceipt, refreshStatus };
