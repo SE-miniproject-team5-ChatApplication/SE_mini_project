@@ -3,6 +3,8 @@ const { Member, Conversation, User, Message } = require('../models');
 const { Errors } = require('../utils/errors');
 const { isValidId } = require('../utils/ids');
 const { serialize } = require('./messageService');
+const { assertMember, conversationIdsOf } = require('./membershipService');
+const { escapeRegex } = require('./userService');
 
 const PAGE_SIZE = 50;
 
@@ -69,4 +71,47 @@ async function getMessages(conversationId, { before, limit } = {}) {
   return { messages, hasMore };
 }
 
-module.exports = { listConversations, getMessages, PAGE_SIZE };
+// Short piece of text around the first match, for the results list.
+function snippetOf(content, q) {
+  const i = content.toLowerCase().indexOf(q.toLowerCase());
+  const start = Math.max(0, i - 40);
+  const end = Math.min(content.length, i + q.length + 40);
+  return (start > 0 ? '…' : '') + content.slice(start, end) + (end < content.length ? '…' : '');
+}
+
+// REQ-HIS-3: case-insensitive keyword search in one conversation or in all of
+// the user's conversations. REQ-HIS-4: only conversations the user is in.
+async function search(userId, { q, conversationId } = {}) {
+  const query = typeof q === 'string' ? q.trim() : '';
+  if (query.length < 2) throw Errors.validation('Type at least 2 characters to search', 'q');
+  if (query.length > 100) throw Errors.validation('Search text is too long', 'q');
+
+  let scope;
+  if (conversationId !== undefined && conversationId !== '') {
+    await assertMember(userId, conversationId);
+    scope = [conversationId];
+  } else {
+    scope = await conversationIdsOf(userId);
+  }
+  if (scope.length === 0) return [];
+
+  const messages = await Message.find({
+    conversationId: { $in: scope },
+    type: { $ne: 'system' },
+    status: { $ne: 'deleted' },
+    content: new RegExp(escapeRegex(query), 'i'),
+  })
+    .sort({ sentAt: -1, _id: -1 })
+    .limit(50)
+    .populate('attachmentId');
+
+  const names = new Map((await listConversations(userId)).map((c) => [c.id, c.name]));
+  return messages.map((m) => ({
+    message: serialize(m),
+    conversationId: String(m.conversationId),
+    conversationName: names.get(String(m.conversationId)) || '',
+    snippet: snippetOf(m.content, query),
+  }));
+}
+
+module.exports = { listConversations, getMessages, search, snippetOf, PAGE_SIZE };

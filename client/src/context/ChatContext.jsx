@@ -13,6 +13,9 @@ export function ChatProvider({ children }) {
   const { socket, user } = useAuth();
   const [activeConversation, setActiveConversation] = useState(null);
   const [messagesByConv, setMessagesByConv] = useState({});
+  // REQ-HIS-3: message to scroll to and highlight after a search result is clicked.
+  const [focusedMessageId, setFocusedMessageId] = useState(null);
+  const focusMessage = useCallback((id) => setFocusedMessageId(id), []);
 
   const openConversation = useCallback((conversation) => {
     setActiveConversation(conversation);
@@ -145,8 +148,10 @@ export function ChatProvider({ children }) {
       sendMessage,
       startDirectChat,
       deleteMessage,
+      focusedMessageId,
+      focusMessage,
     }),
-    [activeConversation, openConversation, closeConversation, messagesByConv, upsertMessages, sendMessage, startDirectChat, deleteMessage]
+    [activeConversation, openConversation, closeConversation, messagesByConv, upsertMessages, sendMessage, startDirectChat, deleteMessage, focusedMessageId, focusMessage]
   );
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }

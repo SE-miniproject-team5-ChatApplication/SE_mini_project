@@ -15,7 +15,7 @@ export default function MessageBubble({ message, mine, senderName }) {
   };
 
   return (
-    <div className={`bubble-row ${mine ? 'mine' : 'theirs'}`}>
+    <div className={`bubble-row ${mine ? 'mine' : 'theirs'}`} data-message-id={message.id}>
       <div className={`bubble ${message.status === 'failed' ? 'bubble-failed' : ''}`}>
         {senderName && <div className="bubble-sender">{senderName}</div>}
         {deleted ? (
