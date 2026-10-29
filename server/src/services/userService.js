@@ -3,6 +3,10 @@ const { User, Contact } = require('../models');
 const { Errors } = require('../utils/errors');
 const { assertId } = require('../utils/ids');
 const { hashPassword, verifyPassword, validatePassword } = require('./authService');
+const fileStorage = require('./fileStorage');
+
+// REQ-PRO-2: avatar limits
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB
 
 // Escapes characters that have a special meaning in regular expressions, so a
 // search for "a.b" or "(" is treated as plain text (also blocks ReDoS input).
@@ -112,6 +116,44 @@ async function changePassword(userId, body = {}) {
   await user.save();
 }
 
+// REQ-PRO-2: work out the real image type from the file's first bytes,
+// never from the file name or the type the browser claims.
+function detectImageType(buffer) {
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return { ext: '.jpg', mimeType: 'image/jpeg' };
+  }
+  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (buffer.length >= 8 && png.every((byte, i) => buffer[i] === byte)) {
+    return { ext: '.png', mimeType: 'image/png' };
+  }
+  return null;
+}
+
+// REQ-PRO-2: JPG or PNG up to 2 MB; replaces (and deletes) the old avatar.
+async function setAvatar(user, file) {
+  if (!file || !file.buffer || file.buffer.length === 0) {
+    throw Errors.validation('Upload an image in the "avatar" field', 'avatar');
+  }
+  if (file.buffer.length > MAX_AVATAR_SIZE) throw Errors.fileTooLarge('Avatar can be at most 2 MB');
+  const type = detectImageType(file.buffer);
+  if (!type) throw Errors.unsupportedType('Avatar must be a JPG or PNG image');
+
+  const oldPath = user.avatarPath;
+  user.avatarPath = await fileStorage.saveBuffer(file.buffer, type.ext, 'avatars');
+  await user.save();
+  if (oldPath) await fileStorage.removeFile(oldPath);
+  return user;
+}
+
+// Finds the avatar file of a user, for GET /api/users/:id/avatar
+async function getAvatarFile(userId) {
+  assertId(userId, 'id');
+  const user = await User.findById(userId);
+  if (!user || !user.avatarPath) throw Errors.notFound('No avatar');
+  const mimeType = user.avatarPath.endsWith('.png') ? 'image/png' : 'image/jpeg';
+  return { fullPath: fileStorage.resolveStoragePath(user.avatarPath), mimeType };
+}
+
 module.exports = {
   escapeRegex,
   searchUsers,
@@ -121,4 +163,8 @@ module.exports = {
   isContact,
   updateProfile,
   changePassword,
+  detectImageType,
+  setAvatar,
+  getAvatarFile,
+  MAX_AVATAR_SIZE,
 };
