@@ -45,6 +45,20 @@ export function ChatProvider({ children }) {
     }
   });
 
+  // REQ-MSG-8: a message was deleted by its sender.
+  useSocketEvent('message:deleted', ({ messageId, conversationId }) => {
+    upsertMessages(conversationId, [{ id: messageId, status: 'deleted', content: null, attachment: null }]);
+  });
+
+  const deleteMessage = useCallback(
+    async (message) => {
+      if (!socket) return;
+      const ack = await socket.timeout(10000).emitWithAck('message:delete', { messageId: message.id });
+      if (ack.ok) upsertMessages(message.conversationId, [{ id: message.id, status: 'deleted', content: null, attachment: null }]);
+    },
+    [socket, upsertMessages]
+  );
+
   // REQ-RCP-4: tick changes pushed by the server (never moves backwards).
   useSocketEvent('receipt:update', ({ messageId, conversationId, status }) => {
     const current = (messagesByConv[conversationId] || []).find((m) => m.id === messageId);
@@ -130,8 +144,9 @@ export function ChatProvider({ children }) {
       upsertMessages,
       sendMessage,
       startDirectChat,
+      deleteMessage,
     }),
-    [activeConversation, openConversation, closeConversation, messagesByConv, upsertMessages, sendMessage, startDirectChat]
+    [activeConversation, openConversation, closeConversation, messagesByConv, upsertMessages, sendMessage, startDirectChat, deleteMessage]
   );
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
