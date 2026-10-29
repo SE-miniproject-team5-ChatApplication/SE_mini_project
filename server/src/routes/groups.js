@@ -27,4 +27,38 @@ router.get(
   })
 );
 
+// REQ-GRP-2 admin actions ------------------------------------------------------
+
+// POST /api/groups/:id/members {userId} -> 200 group
+router.post(
+  '/:id/members',
+  asyncHandler(async (req, res) => {
+    res.json(await groupService.addMember(req.userId, req.params.id, (req.body || {}).userId));
+  })
+);
+
+// DELETE /api/groups/:id/members/:userId -> 200 group
+router.delete(
+  '/:id/members/:userId',
+  asyncHandler(async (req, res) => {
+    res.json(await groupService.removeMember(req.userId, req.params.id, req.params.userId));
+  })
+);
+
+// PUT /api/groups/:id {name} -> 200 group
+router.put(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    res.json(await groupService.renameGroup(req.userId, req.params.id, (req.body || {}).name));
+  })
+);
+
+// POST /api/groups/:id/admins {userId} -> 200 group
+router.post(
+  '/:id/admins',
+  asyncHandler(async (req, res) => {
+    res.json(await groupService.promoteAdmin(req.userId, req.params.id, (req.body || {}).userId));
+  })
+);
+
 module.exports = { basePath: '/api/groups', router };

@@ -2,7 +2,8 @@
 const { Conversation, Member, User, Contact } = require('../models');
 const { Errors } = require('../utils/errors');
 const { isValidId, assertId } = require('../utils/ids');
-const { joinConversation, emitToUser } = require('../utils/realtime');
+const { joinConversation, leaveConversation, emitToUser } = require('../utils/realtime');
+const { assertMember } = require('./membershipService');
 
 const MAX_MEMBERS = 100; // REQ-GRP-1 / BR-6
 const MIN_OTHER_MEMBERS = 2;
@@ -71,4 +72,66 @@ async function getGroup(conversationId) {
   return groupView(conversationId);
 }
 
-module.exports = { createGroup, getGroup, groupView, notifyGroup, validateName, MAX_MEMBERS };
+// REQ-GRP-2 / BR-3: only an admin may add, remove, rename or promote.
+async function assertAdmin(userId, groupId) {
+  const member = await assertMember(userId, groupId);
+  const conversation = await Conversation.findById(groupId).select('type');
+  if (!conversation || conversation.type !== 'group') throw Errors.notFound('Group not found');
+  if (member.role !== 'admin') throw Errors.forbidden('Only group admins can do this');
+  return member;
+}
+
+async function addMember(adminId, groupId, userId) {
+  await assertAdmin(adminId, groupId);
+  assertId(userId, 'userId');
+  if (!(await User.exists({ _id: userId }))) throw Errors.notFound('User not found');
+  if (!(await Contact.exists({ userId: adminId, contactUserId: userId }))) {
+    throw Errors.notFound('You can only add people from your contacts');
+  }
+  if (await Member.exists({ conversationId: groupId, userId })) throw Errors.conflict('Already a member', 'userId');
+  if ((await Member.countDocuments({ conversationId: groupId })) >= MAX_MEMBERS) {
+    throw Errors.validation(`A group can have at most ${MAX_MEMBERS} members`, 'userId');
+  }
+  await Member.create({ conversationId: groupId, userId, role: 'member' });
+  joinConversation(userId, groupId);
+  return notifyGroup(groupId, 'member_added');
+}
+
+async function removeMember(adminId, groupId, userId) {
+  await assertAdmin(adminId, groupId);
+  assertId(userId, 'userId');
+  if (String(adminId) === String(userId)) throw Errors.validation('Use "Leave group" to leave', 'userId');
+  const removed = await Member.findOneAndDelete({ conversationId: groupId, userId });
+  if (!removed) throw Errors.notFound('This user is not a member of the group');
+  leaveConversation(userId, groupId); // stops real-time events at once (REQ-GRP-5)
+  return notifyGroup(groupId, 'member_removed', [userId]);
+}
+
+async function renameGroup(adminId, groupId, name) {
+  await assertAdmin(adminId, groupId);
+  const groupName = validateName(name);
+  await Conversation.updateOne({ _id: groupId }, { name: groupName });
+  return notifyGroup(groupId, 'renamed');
+}
+
+async function promoteAdmin(adminId, groupId, userId) {
+  await assertAdmin(adminId, groupId);
+  assertId(userId, 'userId');
+  const member = await Member.findOneAndUpdate({ conversationId: groupId, userId }, { role: 'admin' }, { new: true });
+  if (!member) throw Errors.notFound('This user is not a member of the group');
+  return notifyGroup(groupId, 'admin_promoted');
+}
+
+module.exports = {
+  createGroup,
+  getGroup,
+  groupView,
+  notifyGroup,
+  validateName,
+  assertAdmin,
+  addMember,
+  removeMember,
+  renameGroup,
+  promoteAdmin,
+  MAX_MEMBERS,
+};
