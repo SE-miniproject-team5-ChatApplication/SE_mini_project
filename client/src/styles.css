@@ -150,3 +150,7 @@ a { color: var(--accent); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .member-picker { border: 1px solid var(--border); border-radius: 6px; max-height: 240px; overflow-y: auto; }
 .check-row { display: block; padding: 4px 0; }
+.inline-form { display: flex; gap: 6px; margin: 8px 0; }
+.inline-form input, .inline-form select { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.badge-role { font-size: 12px; padding: 1px 6px; border-radius: 10px; background: var(--mine); color: var(--accent); }
+.dialog h3 { font-size: 15px; margin: 14px 0 4px; }
