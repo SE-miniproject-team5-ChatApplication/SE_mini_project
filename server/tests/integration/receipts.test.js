@@ -98,3 +98,39 @@ describeDb('REQ-RCP-3 read when the conversation is open and the message display
     expect((await Message.findById(ack.messageId)).status).toBe('sent');
   });
 });
+
+describeDb('REQ-RCP-4 status changes are pushed to the sender in real time', () => {
+  let srv;
+  const sockets = [];
+  beforeAll(async () => {
+    await connectTestDb();
+    srv = await startTestServer();
+  });
+  afterEach(async () => {
+    sockets.splice(0).forEach((s) => s.close());
+    await clearTestDb();
+  });
+  afterAll(async () => {
+    await srv.close();
+    await disconnectTestDb();
+  });
+
+  test('TC-RCP-01 A sees sent -> delivered -> read without refreshing', async () => {
+    const { a, b, conversationId } = await createDirectChat();
+    const sa = await connectClient(srv.url, a.token);
+    const sb = await connectClient(srv.url, b.token);
+    sockets.push(sa, sb);
+    const statuses = [];
+    sa.on('receipt:update', (u) => statuses.push(u.status));
+
+    const got = waitFor(sb, 'message:new');
+    const ack = await emitAck(sa, 'message:send', { conversationId, content: 'hi' });
+    expect(ack.status).toBe('sent');
+    await got;
+    sb.emit('message:delivered', { messageId: ack.messageId });
+    await eventually(() => statuses.includes('delivered'));
+    sb.emit('message:read', { conversationId });
+    await eventually(() => statuses.includes('read'));
+    expect(statuses).toEqual(['delivered', 'read']);
+  });
+});
