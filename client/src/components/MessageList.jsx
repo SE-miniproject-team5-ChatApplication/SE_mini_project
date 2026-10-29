@@ -3,6 +3,7 @@ import { useChat } from '../context/ChatContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useHistory } from '../hooks/useHistory.js';
 import MessageBubble from './MessageBubble.jsx';
+import { useGroupMembers } from '../hooks/useGroupMembers.js';
 
 // Scrollable history. New messages keep the view pinned to the bottom;
 // scrolling to the top loads older messages without jumping (REQ-HIS-2).
@@ -10,6 +11,8 @@ export default function MessageList() {
   const { messages, activeConversation } = useChat();
   const { user } = useAuth();
   const { loading, hasMore, loadOlder } = useHistory(activeConversation?.id);
+  const memberNames = useGroupMembers(activeConversation); // REQ-GRP-3: sender names in groups
+  const isGroup = activeConversation?.type === 'group';
   const boxRef = useRef(null);
   const bottomRef = useRef(null);
   const restore = useRef(null);
@@ -39,9 +42,11 @@ export default function MessageList() {
     <div className="message-list" ref={boxRef} onScroll={onScroll}>
       {loading && <p className="muted small empty-hint">Loading…</p>}
       {!loading && messages.length === 0 && <p className="muted empty-hint">No messages yet. Say hello!</p>}
-      {messages.map((m) => (
-        <MessageBubble key={m.clientMsgId || m.id} message={m} mine={m.mine || m.senderId === user?.id} />
-      ))}
+      {messages.map((m) => {
+        const mine = m.mine || m.senderId === user?.id;
+        const senderName = isGroup && !mine && m.senderId ? memberNames[m.senderId] || 'Former member' : null;
+        return <MessageBubble key={m.clientMsgId || m.id} message={m} mine={mine} senderName={senderName} />;
+      })}
       <div ref={bottomRef} />
     </div>
   );

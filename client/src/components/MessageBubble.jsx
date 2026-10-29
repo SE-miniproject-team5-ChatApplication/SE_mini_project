@@ -5,7 +5,7 @@ import AttachmentView from './AttachmentView.jsx';
 
 // One message. Text is rendered as a React text node, so any HTML or <script>
 // inside a message is shown as plain characters and never executed (NFR-SAFE-2).
-export default function MessageBubble({ message, mine }) {
+export default function MessageBubble({ message, mine, senderName }) {
   const { deleteMessage } = useChat();
   const deleted = message.status === 'deleted';
 
@@ -17,6 +17,7 @@ export default function MessageBubble({ message, mine }) {
   return (
     <div className={`bubble-row ${mine ? 'mine' : 'theirs'}`}>
       <div className={`bubble ${message.status === 'failed' ? 'bubble-failed' : ''}`}>
+        {senderName && <div className="bubble-sender">{senderName}</div>}
         {deleted ? (
           <div className="bubble-text deleted">This message was deleted</div>
         ) : (
