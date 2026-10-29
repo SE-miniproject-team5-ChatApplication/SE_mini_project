@@ -1,5 +1,9 @@
 // Delivery and read receipts (REQ-RCP-1..5). A message status only moves
 // forward: sent -> delivered -> read  (deleted is final, see REQ-MSG-8).
+const { Message } = require('../models');
+const { isValidId } = require('../utils/ids');
+const { isMember, memberUserIds } = require('./membershipService');
+
 const STATUS_RANK = { sent: 0, delivered: 1, read: 2, deleted: 3 };
 
 function canAdvance(from, to) {
@@ -19,4 +23,39 @@ function computeStatus({ current, recipientIds, deliveredTo = [], readBy = [] })
   return canAdvance(current, next) ? next : current;
 }
 
-module.exports = { STATUS_RANK, canAdvance, computeStatus };
+// Recomputes the overall status after a receipt was added and saves it only
+// if it moves forward. Returns { message, changed }.
+async function refreshStatus(messageId) {
+  const message = await Message.findById(messageId);
+  const members = await memberUserIds(message.conversationId);
+  const recipientIds = members.filter((id) => id !== String(message.senderId));
+  const next = computeStatus({ current: message.status, recipientIds, deliveredTo: message.deliveredTo, readBy: message.readBy });
+  if (next === message.status) return { message, changed: false };
+  // Conditional update: never overwrite a status that another request already advanced.
+  const res = await Message.updateOne({ _id: message._id, status: message.status }, { status: next });
+  message.status = next;
+  return { message, changed: res.modifiedCount === 1 };
+}
+
+// Adds userId to message[field] once. Only conversation members who are not
+// the sender can add receipts. Returns null when nothing changed.
+async function addReceipt(field, userId, messageId) {
+  if (!isValidId(messageId)) return null;
+  const message = await Message.findById(messageId).select('senderId conversationId type status');
+  if (!message || message.type === 'system' || message.status === 'deleted') return null;
+  if (String(message.senderId) === String(userId)) return null;
+  if (!(await isMember(userId, message.conversationId))) return null;
+  const res = await Message.updateOne(
+    { _id: messageId, [`${field}.userId`]: { $ne: userId } },
+    { $push: { [field]: { userId, at: new Date() } } }
+  );
+  if (res.modifiedCount === 0) return null;
+  return refreshStatus(messageId);
+}
+
+// REQ-RCP-2: the recipient's client acknowledged receipt.
+function markDelivered(userId, messageId) {
+  return addReceipt('deliveredTo', userId, messageId);
+}
+
+module.exports = { STATUS_RANK, canAdvance, computeStatus, markDelivered, addReceipt, refreshStatus };
