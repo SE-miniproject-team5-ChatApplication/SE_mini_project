@@ -2,6 +2,7 @@ import { useChat } from '../context/ChatContext.jsx';
 import ChatHeader from './ChatHeader.jsx';
 import MessageList from './MessageList.jsx';
 import MessageInput from './MessageInput.jsx';
+import ConnectionBanner from './ConnectionBanner.jsx';
 
 // Centre panel: header, scrollable history and the message input.
 export default function ChatPane() {
@@ -16,6 +17,7 @@ export default function ChatPane() {
   return (
     <section className="chat-pane">
       <ChatHeader conversation={activeConversation} />
+      <ConnectionBanner />
       <MessageList />
       <MessageInput />
     </section>

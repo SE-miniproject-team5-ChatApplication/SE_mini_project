@@ -52,18 +52,33 @@ async function findOwnAttachment(attachmentId, senderId, conversationId) {
 // confirmed the insert, and callers send the acknowledgement only after it
 // resolves - so an acknowledged message is always in the database.
 async function createMessage({ conversationId, senderId, content: rawContent, clientMsgId, attachmentId }) {
+  // REQ-MSG-7: a resend of a message we already stored returns the stored copy
+  // instead of creating a duplicate.
+  const existing = await findByClientMsgId(senderId, clientMsgId);
+  if (existing) return existing;
+
   const content = sanitizeText(rawContent);
   const attachment = await findOwnAttachment(attachmentId, senderId, conversationId);
   validateContent(content, { hasAttachment: Boolean(attachment) });
-  const message = await Message.create({
-    conversationId,
-    senderId,
-    type: attachment ? 'file' : 'text',
-    content: content || '',
-    attachmentId: attachment ? attachment._id : null,
-    clientMsgId: typeof clientMsgId === 'string' ? clientMsgId.slice(0, 64) : undefined,
-    sentAt: new Date(),
-  });
+  let message;
+  try {
+    message = await Message.create({
+      conversationId,
+      senderId,
+      type: attachment ? 'file' : 'text',
+      content: content || '',
+      attachmentId: attachment ? attachment._id : null,
+      clientMsgId: typeof clientMsgId === 'string' ? clientMsgId.slice(0, 64) : undefined,
+      sentAt: new Date(),
+    });
+  } catch (err) {
+    // Two copies of the same resend arrived at the same moment: the unique index kept one.
+    if (err.code === 11000) {
+      const dup = await findByClientMsgId(senderId, clientMsgId);
+      if (dup) return dup;
+    }
+    throw err;
+  }
   await Conversation.updateOne(
     { _id: conversationId },
     {
@@ -73,6 +88,13 @@ async function createMessage({ conversationId, senderId, content: rawContent, cl
   );
   if (attachment) message.attachmentId = attachment; // so serialize() includes its details
   return message;
+}
+
+async function findByClientMsgId(senderId, clientMsgId) {
+  if (typeof clientMsgId !== 'string' || !clientMsgId) return null;
+  const found = await Message.findOne({ senderId, clientMsgId: clientMsgId.slice(0, 64) }).populate('attachmentId');
+  if (found) found.isDuplicate = true;
+  return found;
 }
 
 // REQ-MSG-6: messages that reached the server while this user was offline -

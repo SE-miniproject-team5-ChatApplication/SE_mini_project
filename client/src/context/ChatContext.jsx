@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { http } from '../api/http.js';
 import { useAuth } from './AuthContext.jsx';
 import { newClientMsgId } from '../utils/ids.js';
@@ -77,27 +77,47 @@ export function ChatProvider({ children }) {
     return data;
   }, []);
 
-  // REQ-MSG-1: send over the WebSocket. The message is shown at once as
-  // "pending" and replaced by the stored copy when the server acknowledges it.
+  // REQ-MSG-1 / REQ-MSG-7: messages go through an outbox. Each one keeps its
+  // clientMsgId until the server acknowledges it; after a connection loss
+  // everything still in the outbox is sent again (the server drops duplicates).
+  const outbox = useRef(new Map());
+
+  const deliver = useCallback(
+    async (payload) => {
+      if (!socket || !socket.connected) return; // will be sent on reconnect
+      try {
+        const ack = await socket.timeout(10000).emitWithAck('message:send', payload);
+        outbox.current.delete(payload.clientMsgId);
+        if (ack.ok) upsertMessages(payload.conversationId, [{ ...ack.message, mine: true }]);
+        else upsertMessages(payload.conversationId, [{ clientMsgId: payload.clientMsgId, status: 'failed', error: ack.error.message }]);
+      } catch {
+        // No answer (connection dropped): keep it in the outbox as "pending".
+      }
+    },
+    [socket, upsertMessages]
+  );
+
+  useEffect(() => {
+    if (!socket) return undefined;
+    const flush = () => outbox.current.forEach((payload) => deliver(payload));
+    socket.on('connect', flush);
+    return () => socket.off('connect', flush);
+  }, [socket, deliver]);
+
   const sendMessage = useCallback(
     async (text, attachment = null) => {
-      if (!activeConversation || !socket) return;
+      if (!activeConversation) return;
       const conversationId = activeConversation.id;
       const clientMsgId = newClientMsgId();
       upsertMessages(conversationId, [
         { clientMsgId, conversationId, content: text, attachment, mine: true, status: 'pending', sentAt: new Date().toISOString() },
       ]);
-      try {
-        const payload = { conversationId, content: text, clientMsgId };
-        if (attachment) payload.attachmentId = attachment.attachmentId || attachment.id;
-        const ack = await socket.timeout(10000).emitWithAck('message:send', payload);
-        if (ack.ok) upsertMessages(conversationId, [{ ...ack.message, mine: true }]);
-        else upsertMessages(conversationId, [{ clientMsgId, status: 'failed', error: ack.error.message }]);
-      } catch {
-        upsertMessages(conversationId, [{ clientMsgId, status: 'failed', error: 'No response from server' }]);
-      }
+      const payload = { conversationId, content: text, clientMsgId };
+      if (attachment) payload.attachmentId = attachment.attachmentId || attachment.id;
+      outbox.current.set(clientMsgId, payload);
+      await deliver(payload);
     },
-    [activeConversation, socket, upsertMessages]
+    [activeConversation, upsertMessages, deliver]
   );
 
   const value = useMemo(
