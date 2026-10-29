@@ -122,7 +122,30 @@ async function promoteAdmin(adminId, groupId, userId) {
   return notifyGroup(groupId, 'admin_promoted');
 }
 
+// REQ-GRP-4: any member may leave. If the last admin leaves, the member who
+// joined earliest becomes admin.
+async function leaveGroup(userId, groupId) {
+  const member = await assertMember(userId, groupId);
+  const conversation = await Conversation.findById(groupId).select('type');
+  if (!conversation || conversation.type !== 'group') throw Errors.notFound('Group not found');
+  await Member.deleteOne({ _id: member._id });
+  leaveConversation(userId, groupId);
+
+  let newAdminId = null;
+  if (member.role === 'admin' && !(await Member.exists({ conversationId: groupId, role: 'admin' }))) {
+    const successor = await Member.findOne({ conversationId: groupId }).sort({ joinedAt: 1, _id: 1 });
+    if (successor) {
+      successor.role = 'admin';
+      await successor.save();
+      newAdminId = String(successor.userId);
+    }
+  }
+  await notifyGroup(groupId, 'member_left', [userId]);
+  return { newAdminId };
+}
+
 module.exports = {
+  leaveGroup,
   createGroup,
   getGroup,
   groupView,

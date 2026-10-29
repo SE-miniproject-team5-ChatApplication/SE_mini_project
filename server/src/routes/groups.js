@@ -61,4 +61,13 @@ router.post(
   })
 );
 
+// POST /api/groups/:id/leave -> 204 (admin succession applied)  (REQ-GRP-4)
+router.post(
+  '/:id/leave',
+  asyncHandler(async (req, res) => {
+    await groupService.leaveGroup(req.userId, req.params.id);
+    res.status(204).end();
+  })
+);
+
 module.exports = { basePath: '/api/groups', router };
