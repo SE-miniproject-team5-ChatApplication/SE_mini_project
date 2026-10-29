@@ -8,7 +8,7 @@ import { useGroupMembers } from '../hooks/useGroupMembers.js';
 // Scrollable history. New messages keep the view pinned to the bottom;
 // scrolling to the top loads older messages without jumping (REQ-HIS-2).
 export default function MessageList() {
-  const { messages, activeConversation } = useChat();
+  const { messages, activeConversation, focusedMessageId, focusMessage } = useChat();
   const { user } = useAuth();
   const { loading, hasMore, loadOlder } = useHistory(activeConversation?.id);
   const memberNames = useGroupMembers(activeConversation); // REQ-GRP-3: sender names in groups
@@ -29,6 +29,23 @@ export default function MessageList() {
       restore.current = null;
     }
   }, [messages.length]);
+
+  // REQ-HIS-3 "open in context": load older pages until the searched message
+  // is on screen, then scroll to it and highlight it.
+  useEffect(() => {
+    if (!focusedMessageId || loading) return;
+    const el = boxRef.current?.querySelector(`[data-message-id="${focusedMessageId}"]`);
+    if (el) {
+      el.scrollIntoView({ block: 'center' });
+      el.classList.add('focused');
+      setTimeout(() => el.classList.remove('focused'), 2000);
+      focusMessage(null);
+    } else if (hasMore) {
+      loadOlder();
+    } else if (messages.length > 0) {
+      focusMessage(null);
+    }
+  }, [focusedMessageId, loading, hasMore, loadOlder, messages.length, focusMessage]);
 
   const onScroll = async (e) => {
     if (e.currentTarget.scrollTop > 40 || !hasMore || loading) return;

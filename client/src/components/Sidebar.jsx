@@ -7,6 +7,7 @@ import ContactList from './ContactList.jsx';
 import ContactButton from './ContactButton.jsx';
 import ConversationList from './ConversationList.jsx';
 import NewGroupDialog from './NewGroupDialog.jsx';
+import SearchPanel from './SearchPanel.jsx';
 
 // Left panel. Feature sections (search, contacts, chats, new group) are added
 // here by their own backlog items.
@@ -27,6 +28,7 @@ export default function Sidebar() {
         </div>
       </div>
       <div className="sidebar-body">
+        <SearchPanel />
         <UserSearch renderActions={(u) => <ContactButton user={u} />} />
         <div className="sidebar-section">
           <button type="button" className="btn btn-small" onClick={() => setShowNewGroup(true)}>+ New group</button>
