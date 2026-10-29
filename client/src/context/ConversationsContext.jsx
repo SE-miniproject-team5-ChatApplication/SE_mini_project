@@ -27,6 +27,7 @@ export function ConversationsProvider({ children }) {
 
   useSocketEvent('message:new', scheduleRefresh);
   useSocketEvent('message:ack', scheduleRefresh);
+  useSocketEvent('group:update', scheduleRefresh); // created, renamed, members changed
 
   const value = useMemo(() => ({ conversations, refresh, scheduleRefresh }), [conversations, refresh, scheduleRefresh]);
   return <ConversationsContext.Provider value={value}>{children}</ConversationsContext.Provider>;
