@@ -9,6 +9,14 @@ const router = express.Router();
 router.use(requireAuth);
 
 // GET /api/users/me -> the logged-in user's own profile
+// PUT /api/users/me {displayName?, statusMessage?} -> updated own profile (REQ-PRO-1)
+router.put(
+  '/me',
+  asyncHandler(async (req, res) => {
+    const user = await userService.updateProfile(req.user, req.body);
+    res.json(selfView(user));
+  })
+);
 router.get(
   '/me',
   asyncHandler(async (req, res) => {
