@@ -5,6 +5,7 @@ import { newClientMsgId } from '../utils/ids.js';
 import { useSocketEvent } from '../hooks/useSocketEvent.js';
 
 const ChatContext = createContext(null);
+const STATUS_RANK = { pending: -1, sent: 0, delivered: 1, read: 2, deleted: 3 };
 
 // State of the chat dashboard: the conversation that is open and the
 // messages loaded for each conversation (keyed by conversation id).
@@ -42,6 +43,14 @@ export function ChatProvider({ children }) {
     if (socket && message.id && message.senderId && message.senderId !== user?.id) {
       socket.emit('message:delivered', { messageId: message.id });
     }
+  });
+
+  // REQ-RCP-4: tick changes pushed by the server (never moves backwards).
+  useSocketEvent('receipt:update', ({ messageId, conversationId, status }) => {
+    const current = (messagesByConv[conversationId] || []).find((m) => m.id === messageId);
+    // Ignore messages that are not loaded, and any backward move.
+    if (!current || STATUS_RANK[status] <= (STATUS_RANK[current.status] ?? -1)) return;
+    upsertMessages(conversationId, [{ id: messageId, status }]);
   });
 
   // REQ-RCP-3: while a conversation is open and the window is visible, tell the
