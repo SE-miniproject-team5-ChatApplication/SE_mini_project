@@ -2,6 +2,7 @@
 const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const authService = require('../services/authService');
+const userService = require('../services/userService');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -31,6 +32,16 @@ router.post(
   requireAuth,
   asyncHandler(async (req, res) => {
     await authService.logout(req.userId, req.token);
+    res.status(204).end();
+  })
+);
+
+// PUT /api/auth/password  {currentPassword, newPassword} -> 204 (REQ-PRO-5)
+router.put(
+  '/password',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    await userService.changePassword(req.userId, req.body || {});
     res.status(204).end();
   })
 );

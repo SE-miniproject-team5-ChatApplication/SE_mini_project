@@ -2,6 +2,7 @@
 const { User, Contact } = require('../models');
 const { Errors } = require('../utils/errors');
 const { assertId } = require('../utils/ids');
+const { hashPassword, verifyPassword, validatePassword } = require('./authService');
 
 // Escapes characters that have a special meaning in regular expressions, so a
 // search for "a.b" or "(" is treated as plain text (also blocks ReDoS input).
@@ -89,6 +90,28 @@ async function updateProfile(user, body = {}) {
   return user;
 }
 
+// REQ-PRO-5: change my password after giving the current one.
+// The new password must follow the REQ-AUTH-1 rule.
+async function changePassword(userId, body = {}) {
+  const { currentPassword, newPassword } = body;
+  if (typeof currentPassword !== 'string' || !currentPassword) {
+    throw Errors.validation('Enter your current password', 'currentPassword');
+  }
+  validatePassword(newPassword, 'newPassword');
+  if (newPassword === currentPassword) {
+    throw Errors.validation('New password must be different from the current one', 'newPassword');
+  }
+
+  const user = await User.findById(userId).select('+passwordHash');
+  if (!user) throw Errors.notFound('User not found');
+  if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+    throw Errors.forbidden('Current password is incorrect');
+  }
+
+  user.passwordHash = await hashPassword(newPassword);
+  await user.save();
+}
+
 module.exports = {
   escapeRegex,
   searchUsers,
@@ -97,4 +120,5 @@ module.exports = {
   removeContact,
   isContact,
   updateProfile,
+  changePassword,
 };
