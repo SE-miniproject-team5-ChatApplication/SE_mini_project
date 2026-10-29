@@ -1,5 +1,5 @@
 // Messaging Service (component C6).
-const { Message, Conversation, Attachment } = require('../models');
+const { Message, Conversation, Attachment, Member } = require('../models');
 const { MAX_CONTENT_LENGTH } = require('../models/Message');
 const { Errors } = require('../utils/errors');
 const { sanitizeText } = require('../middleware/sanitize');
@@ -75,4 +75,23 @@ async function createMessage({ conversationId, senderId, content: rawContent, cl
   return message;
 }
 
-module.exports = { createMessage, serialize, previewOf, validateContent };
+// REQ-MSG-6: messages that reached the server while this user was offline -
+// not yet delivered to them, not deleted, sent after they joined - oldest first.
+async function pendingFor(userId, limit = 500) {
+  const memberships = await Member.find({ userId }).select('conversationId joinedAt').lean();
+  if (memberships.length === 0) return [];
+  const messages = await Message.find({
+    $or: memberships.map((m) => ({ conversationId: m.conversationId, sentAt: { $gte: m.joinedAt } })),
+    senderId: { $ne: null, $nin: [userId] },
+    type: { $ne: 'system' },
+    status: { $ne: 'deleted' },
+    'deliveredTo.userId': { $ne: userId },
+    'readBy.userId': { $ne: userId },
+  })
+    .sort({ sentAt: 1, _id: 1 })
+    .limit(limit)
+    .populate('attachmentId');
+  return messages.map(serialize);
+}
+
+module.exports = { createMessage, serialize, previewOf, validateContent, pendingFor };

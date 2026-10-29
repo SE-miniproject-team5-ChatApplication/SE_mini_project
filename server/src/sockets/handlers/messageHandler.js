@@ -3,6 +3,7 @@
 //     -> acknowledgement callback {ok, clientMsgId, messageId, status, sentAt, message}
 //     -> also emits message:ack (or error:event) to the sending socket
 //   message:new  (server -> every other socket in room conv:<id>)
+//   On connect, messages that arrived while the user was offline are sent as message:new.
 const { assertMember } = require('../../services/membershipService');
 const messageService = require('../../services/messageService');
 const { AppError, toErrorBody } = require('../../utils/errors');
@@ -46,4 +47,11 @@ function register(_io, socket) {
   socket.on('message:send', (payload, ack) => queue(() => handleSend(socket, payload, ack)));
 }
 
-module.exports = { register };
+// REQ-MSG-6: deliver stored messages automatically when the recipient reconnects.
+// The client acknowledges each one with message:delivered, so it is sent only once.
+async function onConnect(_io, socket) {
+  const pending = await messageService.pendingFor(socket.data.userId);
+  pending.forEach((m) => socket.emit('message:new', m));
+}
+
+module.exports = { register, onConnect };
