@@ -132,3 +132,10 @@ a { color: var(--accent); }
 .conversation-preview { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 .conversation-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .attachment { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+
+/* ---- Avatars and profile (REQ-PRO-1, REQ-PRO-2) ---- */
+.avatar { border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.avatar-letter { display: inline-flex; align-items: center; justify-content: center; background: #c9d6ea; color: var(--text); font-weight: 700; }
+.avatar-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.profile-page h2 { font-size: 17px; margin-top: 24px; }
+.connection-banner { padding: 6px 14px; background: #fff4ce; border-bottom: 1px solid #e3c55b; font-size: 14px; }

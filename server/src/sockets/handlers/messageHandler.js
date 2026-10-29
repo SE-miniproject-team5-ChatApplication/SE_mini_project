@@ -28,6 +28,9 @@ async function handleSend(socket, payload, ack) {
     const serialized = messageService.serialize(message);
     socket.emit('message:ack', data);
     reply({ ok: true, ...data, message: serialized });
+    // REQ-MSG-7: a resent message that was already stored is acknowledged again
+    // but not broadcast a second time.
+    if (message.isDuplicate) return;
     // REQ-MSG-2: real-time delivery to the recipient's open connection(s)
     // (and to the sender's other tabs). Offline users get it later (REQ-MSG-6).
     socket.to(`conv:${conversationId}`).emit('message:new', serialized);
