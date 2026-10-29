@@ -4,6 +4,7 @@ const { MAX_CONTENT_LENGTH } = require('../models/Message');
 const { Errors } = require('../utils/errors');
 const { sanitizeText } = require('../middleware/sanitize');
 const { isValidId } = require('../utils/ids');
+const { emitToConversation } = require('../utils/realtime');
 
 // REQ-MSG-4 / BR-5: no empty messages, at most 2000 characters.
 // A message with an attachment may have no text (Appendix B.2).
@@ -91,6 +92,22 @@ async function createMessage({ conversationId, senderId, content: rawContent, cl
   return message;
 }
 
+// REQ-GRP-6: "Raksha added Omkar" style messages. They have no sender and are
+// pushed to everyone currently in the conversation room.
+async function createSystemMessage(conversationId, text) {
+  const message = await Message.create({ conversationId, senderId: null, type: 'system', content: text.slice(0, MAX_CONTENT_LENGTH), sentAt: new Date() });
+  await Conversation.updateOne(
+    { _id: conversationId },
+    {
+      lastMessage: { messageId: message._id, senderId: null, preview: previewOf(message), type: 'system', sentAt: message.sentAt },
+      lastMessageAt: message.sentAt,
+    }
+  );
+  const serialized = serialize(message);
+  emitToConversation(conversationId, 'message:new', serialized);
+  return serialized;
+}
+
 // REQ-MSG-8 / BR-4: a sender may delete only their own message. The record is
 // kept for audit; its content is hidden from everyone ("This message was deleted").
 async function deleteMessage(userId, messageId) {
@@ -138,4 +155,4 @@ async function pendingFor(userId, limit = 500) {
   return messages.map(serialize);
 }
 
-module.exports = { createMessage, deleteMessage, serialize, previewOf, validateContent, pendingFor };
+module.exports = { createMessage, createSystemMessage, deleteMessage, serialize, previewOf, validateContent, pendingFor };

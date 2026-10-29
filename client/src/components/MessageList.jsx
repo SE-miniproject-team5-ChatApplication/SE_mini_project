@@ -43,6 +43,13 @@ export default function MessageList() {
       {loading && <p className="muted small empty-hint">Loading…</p>}
       {!loading && messages.length === 0 && <p className="muted empty-hint">No messages yet. Say hello!</p>}
       {messages.map((m) => {
+        if (m.type === 'system') {
+          return (
+            <div key={m.id} className="system-msg">
+              {m.content}
+            </div>
+          );
+        }
         const mine = m.mine || m.senderId === user?.id;
         const senderName = isGroup && !mine && m.senderId ? memberNames[m.senderId] || 'Former member' : null;
         return <MessageBubble key={m.clientMsgId || m.id} message={m} mine={mine} senderName={senderName} />;

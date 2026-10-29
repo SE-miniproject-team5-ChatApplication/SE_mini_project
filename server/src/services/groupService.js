@@ -4,6 +4,12 @@ const { Errors } = require('../utils/errors');
 const { isValidId, assertId } = require('../utils/ids');
 const { joinConversation, leaveConversation, emitToUser } = require('../utils/realtime');
 const { assertMember } = require('./membershipService');
+const { createSystemMessage } = require('./messageService');
+
+async function nameOf(userId) {
+  const user = await User.findById(userId).select('displayName');
+  return user ? user.displayName : 'Someone';
+}
 
 const MAX_MEMBERS = 100; // REQ-GRP-1 / BR-6
 const MIN_OTHER_MEMBERS = 2;
@@ -94,7 +100,9 @@ async function addMember(adminId, groupId, userId) {
   }
   await Member.create({ conversationId: groupId, userId, role: 'member' });
   joinConversation(userId, groupId);
-  return notifyGroup(groupId, 'member_added');
+  const view = await notifyGroup(groupId, 'member_added');
+  await createSystemMessage(groupId, `${await nameOf(adminId)} added ${await nameOf(userId)}`); // REQ-GRP-6
+  return view;
 }
 
 async function removeMember(adminId, groupId, userId) {
@@ -104,7 +112,9 @@ async function removeMember(adminId, groupId, userId) {
   const removed = await Member.findOneAndDelete({ conversationId: groupId, userId });
   if (!removed) throw Errors.notFound('This user is not a member of the group');
   leaveConversation(userId, groupId); // stops real-time events at once (REQ-GRP-5)
-  return notifyGroup(groupId, 'member_removed', [userId]);
+  const view = await notifyGroup(groupId, 'member_removed', [userId]);
+  await createSystemMessage(groupId, `${await nameOf(adminId)} removed ${await nameOf(userId)}`); // REQ-GRP-6
+  return view;
 }
 
 async function renameGroup(adminId, groupId, name) {
@@ -141,6 +151,8 @@ async function leaveGroup(userId, groupId) {
     }
   }
   await notifyGroup(groupId, 'member_left', [userId]);
+  await createSystemMessage(groupId, `${await nameOf(userId)} left the group`); // REQ-GRP-6
+  if (newAdminId) await createSystemMessage(groupId, `${await nameOf(newAdminId)} is now an admin`);
   return { newAdminId };
 }
 
