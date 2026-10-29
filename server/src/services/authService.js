@@ -84,6 +84,10 @@ function findByIdentifier(identifier) {
   return User.findOne(query).select('+passwordHash');
 }
 
+// REQ-AUTH-5: after 5 wrong passwords in a row the account is locked for 15 minutes.
+const MAX_FAILED_LOGINS = 5;
+const LOCK_MINUTES = 15;
+
 // REQ-AUTH-4: log in with email or username + password; issue a JWT valid for 24 h.
 async function login({ identifier, password }) {
   if (typeof identifier !== 'string' || !identifier.trim() || typeof password !== 'string' || !password) {
@@ -91,9 +95,28 @@ async function login({ identifier, password }) {
   }
   const user = await findByIdentifier(identifier);
   // Same generic error whether the user exists or not (does not reveal accounts).
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+  if (!user) throw Errors.invalidCredentials();
+
+  // REQ-AUTH-5: still locked?
+  if (user.lockUntil && user.lockUntil > new Date()) {
+    throw Errors.locked(`Too many failed attempts. Try again in ${LOCK_MINUTES} minutes.`);
+  }
+
+  if (!(await verifyPassword(password, user.passwordHash))) {
+    // An expired lock starts a fresh count.
+    const previous = user.lockUntil ? 0 : user.failedLoginCount || 0;
+    user.failedLoginCount = previous + 1;
+    user.lockUntil = null;
+    if (user.failedLoginCount >= MAX_FAILED_LOGINS) {
+      user.lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
+    }
+    await user.save();
     throw Errors.invalidCredentials();
   }
+
+  // Success: reset the counter.
+  user.failedLoginCount = 0;
+  user.lockUntil = null;
   user.lastLoginAt = new Date();
   await user.save();
   const { token, expiresIn } = signToken(user);
@@ -123,6 +146,8 @@ async function isRevoked(jti) {
 }
 
 module.exports = {
+  MAX_FAILED_LOGINS,
+  LOCK_MINUTES,
   logout,
   isRevoked,
   hashPassword,
