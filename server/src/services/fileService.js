@@ -4,6 +4,7 @@ const FileType = require('file-type');
 const { Attachment } = require('../models');
 const { Errors } = require('../utils/errors');
 const { assertMember } = require('./membershipService');
+const { assertId } = require('../utils/ids');
 const fileStorage = require('./fileStorage');
 
 const ALLOWED_TYPES = {
@@ -153,8 +154,30 @@ async function createAttachment({ file, conversationId, uploaderId }) {
   }
 }
 
+// REQ-FIL-4: only authenticated members of the conversation
+// containing the attachment can download it.
+async function getForDownload(userId, attachmentId) {
+  assertId(attachmentId, 'attachmentId');
+
+  const attachment = await Attachment.findById(attachmentId);
+
+  if (!attachment) {
+    throw Errors.notFound('File not found');
+  }
+
+  await assertMember(userId, String(attachment.conversationId));
+
+  return {
+    path: fileStorage.resolveStoragePath(attachment.storagePath),
+    fileName: attachment.fileName,
+    mimeType: attachment.mimeType,
+    size: attachment.size,
+  };
+}
+
 module.exports = {
   createAttachment,
+  getForDownload,
   cleanFileName,
   extensionOf,
   validateFile,

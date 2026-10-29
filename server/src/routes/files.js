@@ -6,6 +6,7 @@ const { requireAuth } = require('../middleware/auth');
 const { Errors } = require('../utils/errors');
 const { MAX_FILE_SIZE } = require('../models/Attachment');
 const fileService = require('../services/fileService');
+const path = require('path');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -37,5 +38,20 @@ router.post(
     res.status(201).json({ attachmentId: String(attachment._id), ...attachment.toJSON() });
   })
 );
+// GET /api/files/:id — download an attachment as an authorized participant.
+router.get(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    const file = await fileService.getForDownload(req.userId, req.params.id);
 
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Content-Length', file.size);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${file.fileName.replace(/["\\]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`
+    );
+
+    res.sendFile(path.resolve(file.path));
+  })
+);
 module.exports = { basePath: '/api/files', router };
