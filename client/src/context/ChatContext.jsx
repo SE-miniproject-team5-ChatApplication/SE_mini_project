@@ -9,7 +9,7 @@ const ChatContext = createContext(null);
 // State of the chat dashboard: the conversation that is open and the
 // messages loaded for each conversation (keyed by conversation id).
 export function ChatProvider({ children }) {
-  const { socket } = useAuth();
+  const { socket, user } = useAuth();
   const [activeConversation, setActiveConversation] = useState(null);
   const [messagesByConv, setMessagesByConv] = useState({});
 
@@ -36,8 +36,12 @@ export function ChatProvider({ children }) {
   }, []);
 
   // REQ-MSG-2: messages pushed by the server in real time.
+  // REQ-RCP-2: acknowledge receipt so the sender's tick becomes "delivered".
   useSocketEvent('message:new', (message) => {
     upsertMessages(message.conversationId, [message]);
+    if (socket && message.id && message.senderId && message.senderId !== user?.id) {
+      socket.emit('message:delivered', { messageId: message.id });
+    }
   });
 
   // Opens (or creates) the one-to-one conversation with a contact.
