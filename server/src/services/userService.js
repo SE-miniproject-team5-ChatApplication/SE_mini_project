@@ -55,4 +55,46 @@ async function isContact(userId, otherUserId) {
   return Boolean(await Contact.exists({ userId, contactUserId: otherUserId }));
 }
 
-module.exports = { escapeRegex, searchUsers, listContacts, addContact, removeContact, isContact };
+// REQ-PRO-1: edit my display name and/or status message.
+// Only these two fields can be changed here; username and email are ignored.
+async function updateProfile(user, body = {}) {
+  const { displayName, statusMessage } = body;
+  if (displayName === undefined && statusMessage === undefined) {
+    throw Errors.validation('Nothing to update: send displayName and/or statusMessage');
+  }
+
+  if (displayName !== undefined) {
+    if (typeof displayName !== 'string') {
+      throw Errors.validation('Display name must be text', 'displayName');
+    }
+    const name = displayName.trim();
+    if (name.length < 1 || name.length > 40) {
+      throw Errors.validation('Display name must be 1-40 characters', 'displayName');
+    }
+    user.displayName = name;
+  }
+
+  if (statusMessage !== undefined) {
+    if (typeof statusMessage !== 'string') {
+      throw Errors.validation('Status message must be text', 'statusMessage');
+    }
+    const status = statusMessage.trim();
+    if (status.length > 100) {
+      throw Errors.validation('Status message can be at most 100 characters', 'statusMessage');
+    }
+    user.statusMessage = status;
+  }
+
+  await user.save();
+  return user;
+}
+
+module.exports = {
+  escapeRegex,
+  searchUsers,
+  listContacts,
+  addContact,
+  removeContact,
+  isContact,
+  updateProfile,
+};
