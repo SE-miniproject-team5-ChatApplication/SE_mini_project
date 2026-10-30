@@ -7,6 +7,17 @@ import { useSocketEvent } from '../hooks/useSocketEvent.js';
 import { formatDateTime } from '../utils/format.js';
 import PresenceDot from './PresenceDot.jsx';
 
+function getBrowserNotificationPermission() {
+  if (
+    typeof window === 'undefined' ||
+    !('Notification' in window)
+  ) {
+    return 'unsupported';
+  }
+
+  return window.Notification.permission;
+}
+
 export default function ConversationList() {
   const { conversations, refresh } = useConversations();
   const { activeConversation, openConversation } = useChat();
@@ -14,6 +25,41 @@ export default function ConversationList() {
 
   const [notification, setNotification] = useState('');
   const [notificationId, setNotificationId] = useState(0);
+  const [browserPermission, setBrowserPermission] = useState(
+    getBrowserNotificationPermission
+  );
+
+  // Ask the browser for notification permission after a user clicks the button.
+  async function enableBrowserNotifications() {
+    if (
+      typeof window === 'undefined' ||
+      !('Notification' in window)
+    ) {
+      setBrowserPermission('unsupported');
+      return;
+    }
+
+    try {
+      const permission = await window.Notification.requestPermission();
+      setBrowserPermission(permission);
+    } catch (error) {
+      console.error('Could not request browser notification permission:', error);
+      setBrowserPermission(getBrowserNotificationPermission());
+    }
+  }
+
+  // Refresh permission status when the user returns to this browser tab.
+  useEffect(() => {
+    function updatePermission() {
+      setBrowserPermission(getBrowserNotificationPermission());
+    }
+
+    window.addEventListener('focus', updatePermission);
+
+    return () => {
+      window.removeEventListener('focus', updatePermission);
+    };
+  }, []);
 
   // Refresh after opening a conversation so its unread badge resets.
   useEffect(() => {
@@ -26,12 +72,19 @@ export default function ConversationList() {
     return () => clearTimeout(timer);
   }, [activeConversation?.id, refresh]);
 
-  // REQ-NOT-1: show a notification for incoming messages
+  // REQ-NOT-2: show an in-app notification and, when permission
+  // is granted, a browser notification for incoming messages
   // in conversations that are not currently open.
   useSocketEvent('message:new', (message) => {
     if (!message || !user?.id) return;
     if (String(message.senderId) === String(user.id)) return;
-    if (String(message.conversationId) === String(activeConversation?.id)) return;
+
+    if (
+      String(message.conversationId) ===
+      String(activeConversation?.id)
+    ) {
+      return;
+    }
 
     const conversation = conversations.find(
       (item) => String(item.id) === String(message.conversationId)
@@ -39,12 +92,41 @@ export default function ConversationList() {
 
     const conversationName = conversation?.name || 'New conversation';
     const messageText = message.content || 'Sent an attachment';
+    const notificationText = `${conversationName}: ${messageText}`;
 
-    setNotification(`${conversationName}: ${messageText}`);
+    // Existing in-app notification.
+    setNotification(notificationText);
     setNotificationId((previous) => previous + 1);
+
+    // Browser notification, only when the user has granted permission.
+    if (
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
+      window.Notification.permission === 'granted'
+    ) {
+      try {
+        const browserNotification = new window.Notification(
+          'New message',
+          {
+            body: notificationText,
+          }
+        );
+
+        browserNotification.onclick = () => {
+          window.focus();
+          browserNotification.close();
+
+          if (conversation) {
+            openConversation(conversation);
+          }
+        };
+      } catch (error) {
+        console.error('Could not display browser notification:', error);
+      }
+    }
   });
 
-  // Automatically dismiss the notification after five seconds.
+  // Automatically dismiss the in-app notification after five seconds.
   useEffect(() => {
     if (!notification) return undefined;
 
@@ -59,7 +141,9 @@ export default function ConversationList() {
   useEffect(() => {
     if (
       activeConversation &&
-      !conversations.some((c) => c.id === activeConversation.id)
+      !conversations.some(
+        (conversation) => conversation.id === activeConversation.id
+      )
     ) {
       refresh().catch(() => {});
     }
@@ -67,7 +151,69 @@ export default function ConversationList() {
 
   return (
     <div className="sidebar-section">
-      <h2>Chats</h2>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '8px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <h2>Chats</h2>
+
+        {browserPermission === 'default' && (
+          <button
+            type="button"
+            onClick={enableBrowserNotifications}
+            style={{
+              padding: '6px 9px',
+              borderRadius: '5px',
+              border: '1px solid #1f6feb',
+              background: '#ffffff',
+              color: '#1f6feb',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            Enable browser notifications
+          </button>
+        )}
+
+        {browserPermission === 'granted' && (
+          <span
+            style={{
+              color: '#16803c',
+              fontSize: '12px',
+            }}
+            role="status"
+          >
+            Browser notifications enabled
+          </span>
+        )}
+
+        {browserPermission === 'denied' && (
+          <span
+            style={{
+              color: '#b54708',
+              fontSize: '12px',
+            }}
+            role="status"
+            title="Change notification permission in your browser site settings."
+          >
+            Browser notifications blocked
+          </span>
+        )}
+
+        {browserPermission === 'unsupported' && (
+          <span
+            className="muted small"
+            role="status"
+          >
+            Browser notifications unavailable
+          </span>
+        )}
+      </div>
 
       {notification && (
         <div
