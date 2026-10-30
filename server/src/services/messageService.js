@@ -1,3 +1,4 @@
+
 // Messaging Service (component C6).
 const { Message, Conversation, Attachment, Member } = require('../models');
 const { MAX_CONTENT_LENGTH } = require('../models/Message');
@@ -32,7 +33,13 @@ function serialize(message) {
   json.senderId = json.senderId ? String(json.senderId) : null;
   const att = json.attachmentId;
   if (att && typeof att === 'object' && att.fileName) {
-    json.attachment = { id: String(att.id || att._id), fileName: att.fileName, mimeType: att.mimeType, size: att.size, url: `/api/files/${att.id || att._id}` };
+    json.attachment = {
+      id: String(att.id || att._id),
+      fileName: att.fileName,
+      mimeType: att.mimeType,
+      size: att.size,
+      url: `/api/files/${att.id || att._id}`,
+    };
     json.attachmentId = json.attachment.id;
   } else if (att) {
     json.attachmentId = String(att);
@@ -44,24 +51,34 @@ function serialize(message) {
 // The attachment must have been uploaded by the sender into this conversation.
 async function findOwnAttachment(attachmentId, senderId, conversationId) {
   if (attachmentId === undefined || attachmentId === null) return null;
-  const attachment = await Attachment.findOne({ _id: String(attachmentId), uploaderId: senderId, conversationId }).catch(() => null);
+  const attachment = await Attachment.findOne({
+    _id: String(attachmentId),
+    uploaderId: senderId,
+    conversationId,
+  }).catch(() => null);
+
   if (!attachment) throw Errors.validation('Attachment not found', 'attachmentId');
   return attachment;
 }
 
 // REQ-MSG-1: store a text message sent by a member of the conversation.
-// REQ-MSG-3 / NFR-SAFE-1: this function resolves only after MongoDB has
-// confirmed the insert, and callers send the acknowledgement only after it
-// resolves - so an acknowledged message is always in the database.
-async function createMessage({ conversationId, senderId, content: rawContent, clientMsgId, attachmentId }) {
+// REQ-NOT-1: increment unread counts for all recipients, excluding the sender.
+async function createMessage({
+  conversationId,
+  senderId,
+  content: rawContent,
+  clientMsgId,
+  attachmentId,
+}) {
   // REQ-MSG-7: a resend of a message we already stored returns the stored copy
-  // instead of creating a duplicate.
+  // instead of creating a duplicate or incrementing unread counts again.
   const existing = await findByClientMsgId(senderId, clientMsgId);
   if (existing) return existing;
 
   const content = sanitizeText(rawContent);
   const attachment = await findOwnAttachment(attachmentId, senderId, conversationId);
   validateContent(content, { hasAttachment: Boolean(attachment) });
+
   let message;
   try {
     message = await Message.create({
@@ -74,64 +91,110 @@ async function createMessage({ conversationId, senderId, content: rawContent, cl
       sentAt: new Date(),
     });
   } catch (err) {
-    // Two copies of the same resend arrived at the same moment: the unique index kept one.
+    // Two copies of the same resend arrived at the same moment:
+    // the unique index kept one.
     if (err.code === 11000) {
       const dup = await findByClientMsgId(senderId, clientMsgId);
       if (dup) return dup;
     }
     throw err;
   }
-  await Conversation.updateOne(
-    { _id: conversationId },
-    {
-      lastMessage: { messageId: message._id, senderId, preview: previewOf(message, attachment), type: message.type, sentAt: message.sentAt },
-      lastMessageAt: message.sentAt,
-    }
-  );
-  if (attachment) message.attachmentId = attachment; // so serialize() includes its details
+
+  await Promise.all([
+    Conversation.updateOne(
+      { _id: conversationId },
+      {
+        lastMessage: {
+          messageId: message._id,
+          senderId,
+          preview: previewOf(message, attachment),
+          type: message.type,
+          sentAt: message.sentAt,
+        },
+        lastMessageAt: message.sentAt,
+      }
+    ),
+
+    // REQ-NOT-1: every other member gets one unread message.
+    Member.updateMany(
+      {
+        conversationId,
+        userId: { $ne: senderId },
+      },
+      {
+        $inc: { unreadCount: 1 },
+      }
+    ),
+  ]);
+
+  if (attachment) message.attachmentId = attachment;
   return message;
 }
 
 // REQ-GRP-6: "Raksha added Omkar" style messages. They have no sender and are
 // pushed to everyone currently in the conversation room.
 async function createSystemMessage(conversationId, text) {
-  const message = await Message.create({ conversationId, senderId: null, type: 'system', content: text.slice(0, MAX_CONTENT_LENGTH), sentAt: new Date() });
+  const message = await Message.create({
+    conversationId,
+    senderId: null,
+    type: 'system',
+    content: text.slice(0, MAX_CONTENT_LENGTH),
+    sentAt: new Date(),
+  });
+
   await Conversation.updateOne(
     { _id: conversationId },
     {
-      lastMessage: { messageId: message._id, senderId: null, preview: previewOf(message), type: 'system', sentAt: message.sentAt },
+      lastMessage: {
+        messageId: message._id,
+        senderId: null,
+        preview: previewOf(message),
+        type: 'system',
+        sentAt: message.sentAt,
+      },
       lastMessageAt: message.sentAt,
     }
   );
+
   const serialized = serialize(message);
   emitToConversation(conversationId, 'message:new', serialized);
   return serialized;
 }
 
-// REQ-MSG-8 / BR-4: a sender may delete only their own message. The record is
-// kept for audit; its content is hidden from everyone ("This message was deleted").
+// REQ-MSG-8 / BR-4: a sender may delete only their own message.
+// The record is kept for audit; its content is hidden from everyone.
 async function deleteMessage(userId, messageId) {
   if (!isValidId(messageId)) throw Errors.validation('Invalid messageId', 'messageId');
+
   const message = await Message.findById(messageId);
   if (!message) throw Errors.notFound('Message not found');
+
   if (!message.senderId || String(message.senderId) !== String(userId)) {
     throw Errors.forbidden('You can only delete your own messages');
   }
+
   if (message.status !== 'deleted') {
     message.status = 'deleted';
     message.deletedAt = new Date();
     await message.save();
+
     await Conversation.updateOne(
       { _id: message.conversationId, 'lastMessage.messageId': message._id },
       { 'lastMessage.preview': previewOf(message) }
     );
   }
+
   return message;
 }
 
 async function findByClientMsgId(senderId, clientMsgId) {
   if (typeof clientMsgId !== 'string' || !clientMsgId) return null;
-  const found = await Message.findOne({ senderId, clientMsgId: clientMsgId.slice(0, 64) }).populate('attachmentId');
+
+  const found = await Message.findOne({
+    senderId,
+    clientMsgId: clientMsgId.slice(0, 64),
+  }).populate('attachmentId');
+
   if (found) found.isDuplicate = true;
   return found;
 }
@@ -141,8 +204,12 @@ async function findByClientMsgId(senderId, clientMsgId) {
 async function pendingFor(userId, limit = 500) {
   const memberships = await Member.find({ userId }).select('conversationId joinedAt').lean();
   if (memberships.length === 0) return [];
+
   const messages = await Message.find({
-    $or: memberships.map((m) => ({ conversationId: m.conversationId, sentAt: { $gte: m.joinedAt } })),
+    $or: memberships.map((m) => ({
+      conversationId: m.conversationId,
+      sentAt: { $gte: m.joinedAt },
+    })),
     senderId: { $ne: null, $nin: [userId] },
     type: { $ne: 'system' },
     status: { $ne: 'deleted' },
@@ -152,7 +219,16 @@ async function pendingFor(userId, limit = 500) {
     .sort({ sentAt: 1, _id: 1 })
     .limit(limit)
     .populate('attachmentId');
+
   return messages.map(serialize);
 }
 
-module.exports = { createMessage, createSystemMessage, deleteMessage, serialize, previewOf, validateContent, pendingFor };
+module.exports = {
+  createMessage,
+  createSystemMessage,
+  deleteMessage,
+  serialize,
+  previewOf,
+  validateContent,
+  pendingFor,
+};
