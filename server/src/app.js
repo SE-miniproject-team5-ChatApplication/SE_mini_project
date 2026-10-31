@@ -8,8 +8,8 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const config = require('./config');
-const logger = require('./utils/logger');
-const { AppError, toErrorBody } = require('./utils/errors');
+const { AppError } = require('./utils/errors');
+const { errorHandler } = require('./middleware/errorHandler');
 const { requireAuthExceptPublic } = require('./middleware/auth');
 const { sanitizeBody } = require('./middleware/sanitize');
 
@@ -50,12 +50,8 @@ function createApp() {
   app.use('/api', (_req, _res, next) => next(new AppError(404, 'NOT_FOUND', 'Route not found')));
   serveClient(app);
 
-  // Basic error handler - replaced by middleware/errorHandler.js in NFR-SAFE-4.
-  app.use((err, req, res, _next) => {
-    const status = err instanceof AppError ? err.status : 500;
-    if (status >= 500) logger.error({ err, requestId: req.id }, 'request failed');
-    res.status(status).json(toErrorBody(err, req.id));
-  });
+  // NFR-SAFE-4: central error handler (middleware/errorHandler.js)
+  app.use(errorHandler);
 
   return app;
 }
