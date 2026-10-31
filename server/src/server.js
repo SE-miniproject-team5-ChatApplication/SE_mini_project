@@ -17,6 +17,8 @@ async function start() {
 }
 
 if (require.main === module) {
+  // NFR-SAFE-4: a forgotten promise somewhere must not stop the server.
+  process.on('unhandledRejection', (err) => logger.error({ err }, 'unhandled promise rejection'));
   start().catch((err) => {
     logger.fatal({ err }, 'failed to start');
     process.exit(1);

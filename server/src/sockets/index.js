@@ -10,6 +10,7 @@ const path = require('path');
 const { Server } = require('socket.io');
 const config = require('../config');
 const logger = require('../utils/logger');
+const { protectSocket } = require('../utils/safeSocket');
 const { verifyToken } = require('../utils/jwt');
 const { setIO } = require('../utils/realtime');
 const { User, Member, RevokedToken } = require('../models');
@@ -61,6 +62,7 @@ function attachSockets(httpServer) {
 
   io.on('connection', async (socket) => {
     const { userId } = socket.data;
+    protectSocket(socket); // NFR-SAFE-4
     handlers.forEach((h) => h.register && h.register(io, socket));
     try {
       socket.join(`user:${userId}`);
