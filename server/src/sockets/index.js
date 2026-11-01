@@ -13,8 +13,7 @@ const logger = require('../utils/logger');
 const { verifyToken } = require('../utils/jwt');
 const { setIO } = require('../utils/realtime');
 const { User, Member, RevokedToken } = require('../models');
-const { protectSocket } = require('./safeHandler');
-const { socketPayloadGuard } = require('../middleware/validate');
+const { protectSocket } = require('../utils/safeSocket');
 const { createMessageLimiter, socketRateLimit } = require('../middleware/rateLimit');
 
 function loadHandlers() {
@@ -66,7 +65,6 @@ function attachSockets(httpServer) {
   io.on('connection', async (socket) => {
     const { userId } = socket.data;
     protectSocket(socket); // NFR-SAFE-4: a failing handler never crashes the server
-    socket.use(socketPayloadGuard(socket)); // NFR-SEC-5
     socket.use(socketRateLimit(socket, allowMessage)); // NFR-SEC-6
     handlers.forEach((h) => h.register && h.register(io, socket));
     try {
