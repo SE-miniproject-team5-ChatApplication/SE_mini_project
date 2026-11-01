@@ -45,3 +45,10 @@ npm run dev:server                      # http://localhost:5000/api/health
 3. Commit with the issue ID in the message: `[REQ-AUTH-1] Register endpoint`.
 4. Open a Pull Request whose description contains `Closes #<issue number>`.
 5. CI must pass and a repo owner reviews and merges.
+
+## Database backup (NFR-SAFE-1)
+
+- Back up now: `npm run backup --prefix server`. This writes `server/backups/<time>/`, with one JSON file per collection, and keeps the newest 7 (change with `BACKUP_KEEP`, folder with `BACKUP_DIR`).
+- Run it daily, e.g. with cron at 2 am: `0 2 * * * cd /path/to/SE_mini_project && npm run backup --prefix server`
+- Restore (replaces all current data): `npm run restore --prefix server -- backups/<folder> --yes`
+- Backups contain password hashes. Never commit them; `server/backups/` is in `.gitignore`.
