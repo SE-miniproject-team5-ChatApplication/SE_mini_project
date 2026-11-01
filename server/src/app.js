@@ -12,7 +12,8 @@ const { AppError } = require('./utils/errors');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requireAuthExceptPublic } = require('./middleware/auth');
 const { sanitizeBody } = require('./middleware/sanitize');
-const { rejectUnsafeKeys } = require('./middleware/rejectUnsafeKeys');
+const { rejectOperatorKeys } = require('./middleware/validate');
+const { createRestLimiter } = require('./middleware/rateLimit');
 
 function loadRoutes(app) {
   const dir = path.join(__dirname, 'routes');
@@ -34,13 +35,19 @@ function serveClient(app) {
 function createApp() {
   const app = express();
   app.disable('x-powered-by');
-  // NFR-SEC-5: query values are always plain strings, never objects like ?a[$ne]=1
-  app.set('query parser', 'simple');
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        // Avatars and image attachments are shown from blob: URLs (fetched with the token).
+        directives: { imgSrc: ["'self'", 'data:', 'blob:'] },
+      },
+    })
+  );
   app.use(cors({ origin: config.clientOrigin }));
+  app.use('/api', createRestLimiter()); // NFR-SEC-6: 100 requests / minute / IP
   app.use(express.json({ limit: '100kb' }));
+  app.use(rejectOperatorKeys); // NFR-SEC-5
   app.use(sanitizeBody);
-  app.use(rejectUnsafeKeys); // NFR-SEC-5
   app.use((req, _res, next) => {
     req.id = crypto.randomUUID();
     next();
@@ -54,8 +61,7 @@ function createApp() {
   app.use('/api', (_req, _res, next) => next(new AppError(404, 'NOT_FOUND', 'Route not found')));
   serveClient(app);
 
-  // NFR-SAFE-4: central error handler (middleware/errorHandler.js)
-  app.use(errorHandler);
+  app.use(errorHandler); // NFR-SAFE-4
 
   return app;
 }

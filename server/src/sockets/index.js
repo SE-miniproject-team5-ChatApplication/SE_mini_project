@@ -10,10 +10,12 @@ const path = require('path');
 const { Server } = require('socket.io');
 const config = require('../config');
 const logger = require('../utils/logger');
-const { protectSocket } = require('../utils/safeSocket');
 const { verifyToken } = require('../utils/jwt');
 const { setIO } = require('../utils/realtime');
 const { User, Member, RevokedToken } = require('../models');
+const { protectSocket } = require('./safeHandler');
+const { socketPayloadGuard } = require('../middleware/validate');
+const { createMessageLimiter, socketRateLimit } = require('../middleware/rateLimit');
 
 function loadHandlers() {
   const dir = path.join(__dirname, 'handlers');
@@ -57,12 +59,15 @@ function attachSockets(httpServer) {
   setIO(io);
   io.use(authenticateSocket);
 
+  const allowMessage = createMessageLimiter(); // NFR-SEC-6: 20 messages / 10 s / user
   const handlers = loadHandlers();
   handlers.forEach((h) => h.init && h.init(io));
 
   io.on('connection', async (socket) => {
     const { userId } = socket.data;
-    protectSocket(socket); // NFR-SAFE-4
+    protectSocket(socket); // NFR-SAFE-4: a failing handler never crashes the server
+    socket.use(socketPayloadGuard(socket)); // NFR-SEC-5
+    socket.use(socketRateLimit(socket, allowMessage)); // NFR-SEC-6
     handlers.forEach((h) => h.register && h.register(io, socket));
     try {
       socket.join(`user:${userId}`);
