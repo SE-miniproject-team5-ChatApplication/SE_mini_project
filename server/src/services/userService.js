@@ -1,5 +1,7 @@
 // User Service (component C5): profile, user search, contacts.
-const { User, Contact } = require('../models');
+const { User, Contact, Member, Conversation, RevokedToken } = require('../models');
+const { leaveGroup } = require('./groupService');
+const { getIO } = require('../utils/realtime');
 const { Errors } = require('../utils/errors');
 const { assertId } = require('../utils/ids');
 const { hashPassword, verifyPassword, validatePassword } = require('./authService');
@@ -154,7 +156,39 @@ async function getAvatarFile(userId) {
   return { fullPath: fileStorage.resolveStoragePath(user.avatarPath), mimeType };
 }
 
+// NFR-SEC-7: delete my account and the personal data tied to it.
+// Kept on purpose: messages already sent stay in the other people's history
+// (shown as "Deleted user"), because messages are records (BR-4).
+async function deleteAccount(userId, body = {}) {
+  const { password } = body;
+  if (typeof password !== 'string' || !password) {
+    throw Errors.validation('Enter your password to delete your account', 'password');
+  }
+  const user = await User.findById(userId).select('+passwordHash');
+  if (!user) throw Errors.notFound('User not found');
+  if (!(await verifyPassword(password, user.passwordHash))) throw Errors.forbidden('Password is incorrect');
+
+  // Groups: leave each one, so admin succession and the "left the group" notice still happen.
+  const memberships = await Member.find({ userId }).lean();
+  const groups = await Conversation.find({ _id: { $in: memberships.map((m) => m.conversationId) }, type: 'group' })
+    .select('_id')
+    .lean();
+  for (const group of groups) await leaveGroup(String(user._id), String(group._id));
+
+  // Direct chats: drop my membership; the other person keeps the history.
+  await Member.deleteMany({ userId });
+  await Contact.deleteMany({ $or: [{ userId }, { contactUserId: userId }] });
+  await RevokedToken.deleteMany({ userId });
+  if (user.avatarPath) await fileStorage.removeFile(user.avatarPath);
+  await User.deleteOne({ _id: userId });
+
+  // Close any open connections of this account.
+  const io = getIO();
+  if (io) io.in(`user:${userId}`).disconnectSockets(true);
+}
+
 module.exports = {
+  deleteAccount,
   escapeRegex,
   searchUsers,
   listContacts,

@@ -70,4 +70,13 @@ router.get(
   })
 );
 
+// DELETE /api/users/me {password} -> 204 (NFR-SEC-7)
+router.delete(
+  '/me',
+  asyncHandler(async (req, res) => {
+    await userService.deleteAccount(req.userId, req.body || {});
+    res.status(204).end();
+  })
+);
+
 module.exports = { basePath: '/api/users', router };
