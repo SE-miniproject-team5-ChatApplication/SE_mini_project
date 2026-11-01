@@ -12,6 +12,7 @@ const { AppError } = require('./utils/errors');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requireAuthExceptPublic } = require('./middleware/auth');
 const { sanitizeBody } = require('./middleware/sanitize');
+const { rejectUnsafeKeys } = require('./middleware/rejectUnsafeKeys');
 
 function loadRoutes(app) {
   const dir = path.join(__dirname, 'routes');
@@ -33,10 +34,13 @@ function serveClient(app) {
 function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  // NFR-SEC-5: query values are always plain strings, never objects like ?a[$ne]=1
+  app.set('query parser', 'simple');
   app.use(helmet());
   app.use(cors({ origin: config.clientOrigin }));
   app.use(express.json({ limit: '100kb' }));
   app.use(sanitizeBody);
+  app.use(rejectUnsafeKeys); // NFR-SEC-5
   app.use((req, _res, next) => {
     req.id = crypto.randomUUID();
     next();

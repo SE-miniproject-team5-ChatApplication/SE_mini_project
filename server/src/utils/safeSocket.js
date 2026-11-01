@@ -1,8 +1,11 @@
 // NFR-SAFE-4: wraps every listener added with socket.on, so an error thrown (or a
 // rejected promise) inside one event handler is logged and reported to that client
 // only. It can never become an uncaught error that stops the server.
+// NFR-SEC-5: payloads with unsafe keys ("$ne", "a.b", "__proto__") are rejected
+// before the handler runs.
 const logger = require('./logger');
-const { AppError, toErrorBody } = require('./errors');
+const { AppError, Errors, toErrorBody } = require('./errors');
+const { findUnsafeKey } = require('./unsafeKeys');
 
 function guardListener(socket, event, listener) {
   return function guarded(...args) {
@@ -15,6 +18,13 @@ function guardListener(socket, event, listener) {
       const ack = args[args.length - 1];
       if (typeof ack === 'function') ack({ ok: false, error });
     };
+
+    const bad = findUnsafeKey(args.filter((a) => typeof a !== 'function'));
+    if (bad) {
+      report(Errors.validation('Event contains a field name that is not allowed', bad.replace(/^\d+\.?/, '')));
+      return undefined;
+    }
+
     try {
       const result = listener.apply(this, args);
       if (result && typeof result.then === 'function') result.catch(report);
