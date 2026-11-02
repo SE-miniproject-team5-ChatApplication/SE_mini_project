@@ -11,9 +11,9 @@ Every automated test title starts with its TC id, so `npx jest -t TC-MSG-01` run
 | TC-AUTH-04 | REQ-AUTH-5 | `server/tests/integration/auth.lockout.test.js` |
 | TC-AUTH-05 | REQ-AUTH-6 | `server/tests/integration/auth.logout.test.js` |
 | TC-AUTH-06 | REQ-AUTH-7, NFR-SEC-1 | `server/tests/integration/auth.guard.test.js`<br>`server/tests/integration/auth.middleware.test.js`<br>`server/tests/integration/socketGateway.test.js` |
-| TC-PRO-01 | REQ-PRO-1, REQ-PRO-2 | `server/tests/integration/avatar.test.js`<br>`server/tests/integration/profile.test.js` |
+| TC-PRO-01 | REQ-PRO-1, REQ-PRO-2 | `server/tests/integration/users.avatar.test.js`<br>`server/tests/integration/users.profile.test.js` |
 | TC-PRO-02 | REQ-PRO-3, REQ-PRO-4 | `server/tests/integration/contacts.test.js`<br>`server/tests/integration/users.search.test.js` |
-| TC-PRO-03 | REQ-PRO-5 | `server/tests/integration/auth.changePassword.test.js` |
+| TC-PRO-03 | REQ-PRO-5 | `server/tests/integration/users.password.test.js` |
 | TC-MSG-01 | REQ-MSG-1, REQ-MSG-2, REQ-MSG-3 | `server/tests/integration/messages.deliver.test.js`<br>`server/tests/integration/messages.persist.test.js`<br>`server/tests/integration/messages.send.test.js` |
 | TC-MSG-02 | REQ-MSG-4 | `server/tests/integration/messages.validate.test.js`<br>`server/tests/unit/messageService.validate.test.js` |
 | TC-MSG-03 | REQ-MSG-5 | `server/tests/integration/messages.order.test.js`<br>`server/tests/unit/serialQueue.test.js` |
@@ -34,16 +34,16 @@ Every automated test title starts with its TC id, so `npx jest -t TC-MSG-01` run
 | TC-HIS-02 | REQ-HIS-3, REQ-HIS-4 | `server/tests/integration/history.isolation.test.js`<br>`server/tests/integration/search.test.js` |
 | TC-HIS-03 | REQ-HIS-5 | stretch - not yet |
 | TC-FIL-01 | REQ-FIL-1, REQ-FIL-3, REQ-FIL-5 | `server/tests/integration/files.upload.test.js`<br>`server/tests/unit/fileStorage.test.js` |
-| TC-FIL-02 | REQ-FIL-1, REQ-FIL-2 | `server/tests/integration/files.upload.test.js`<br>`server/tests/unit/fileType.test.js` |
-| TC-FIL-03 | REQ-FIL-4, NFR-SAFE-3 | `server/tests/integration/files.download.test.js`<br>`server/tests/unit/safeFileHeaders.test.js` |
-| TC-NOT-01 | REQ-NOT-1..3 | `server/tests/integration/notifications.test.js` |
+| TC-FIL-02 | REQ-FIL-1, REQ-FIL-2 | `server/tests/integration/files.upload.test.js` |
+| TC-FIL-03 | REQ-FIL-4, NFR-SAFE-3 | `server/tests/integration/files.download.test.js` |
+| TC-NOT-01 | REQ-NOT-1..3 | `server/tests/integration/notifications.unread.test.js` |
 | TC-NOT-02 | REQ-NOT-4 | stretch - not yet |
 | TC-PERF-01 | NFR-PERF-1, NFR-PERF-2 | stretch - not yet |
-| TC-PERF-02 | NFR-PERF-3 | `server/tests/integration/perf.history.test.js`<br>`server/scripts/perf/load-times.js` |
-| TC-PERF-03 | NFR-PERF-4 | `server/tests/integration/perf.search.test.js`<br>`server/scripts/perf/search-time.js` |
+| TC-PERF-02 | NFR-PERF-3 | `server/tests/integration/perf.dashboard.test.js` |
+| TC-PERF-03 | NFR-PERF-4 | `server/tests/integration/perf.search.test.js` |
 | TC-PERF-04 | NFR-PERF-5 | stretch - not yet |
-| TC-SEC-01 | NFR-SAFE-2, NFR-SEC-5 | `server/tests/integration/injection.test.js`<br>`server/tests/integration/xss.test.js`<br>`server/tests/unit/sanitize.test.js`<br>`server/tests/unit/validate.test.js` |
+| TC-SEC-01 | NFR-SAFE-2, NFR-SEC-5 | `server/tests/integration/xss.test.js`<br>`server/tests/unit/sanitize.test.js` |
 | TC-SEC-02 | NFR-SEC-6 | `server/tests/integration/rateLimit.test.js`<br>`server/tests/unit/rateLimit.test.js` |
-| TC-SEC-03 | NFR-SEC-2, NFR-SEC-3, NFR-SEC-7 | `server/tests/integration/accountDeletion.test.js`<br>`server/tests/unit/config.test.js` |
-| TC-SAFE-01 | NFR-SAFE-1, NFR-SAFE-4 | `server/tests/integration/messages.persist.test.js`<br>`server/tests/integration/safety.test.js`<br>`server/tests/unit/backup.test.js`<br>`server/tests/unit/safeHandler.test.js` |
+| TC-SEC-03 | NFR-SEC-2, NFR-SEC-3, NFR-SEC-7 | `server/tests/unit/config.test.js` |
+| TC-SAFE-01 | NFR-SAFE-1, NFR-SAFE-4 | `server/tests/integration/messages.persist.test.js` |
 | TC-USAB-01 | NFR-QA-1 | stretch - not yet |
