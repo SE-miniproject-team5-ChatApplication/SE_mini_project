@@ -1,13 +1,13 @@
 # Test Summary Report (Test Plan section 8)
 
 Numbers come from CI (`npm run test:ci`), `npm run trace` and a local run on Windows.
-Repeat the run and update this page when v1.0 is tagged (PRC-4).
+v1.0 adds only version numbers and documents on top of the commit tested here.
 
 | Item | Value |
 |---|---|
-| Build / tag tested | `main` at commit `7ca4af9` (v1.0 not tagged yet) |
+| Build / tag tested | `main` at commit `4ba43b3` |
 | Date | 2 Nov 2026 |
-| Automated tests (passed / total) | CI, Linux, Node 20: 222 / 222. Local, Windows, Node 22: 221 / 222 |
+| Automated tests (passed / total) | CI, Linux, Node 20: 223 / 223. Local, Windows, Node 22: 222 / 223 |
 | Statement coverage (target >= 70 %) | 94.52 % (CI) |
 | Test Plan cases implemented (`npm run trace`) | 37 / 42 |
 | Manual cases executed (USAB, browser, reliability) | Sprint 2 video script run in a headless browser: 37 checks passed. Other manual cases not recorded |
@@ -19,7 +19,7 @@ Unix file permissions, which Windows does not have, and it passes on Linux.
 ## Defects found by the browser run
 
 The automated tests cover the server, so these client-visible defects passed CI. All four are
-fixed. The table above was measured before the fixes, and PRC-4 repeats the run.
+fixed, and the table above includes the fixes.
 
 | Defect | Requirement | Cause |
 |---|---|---|

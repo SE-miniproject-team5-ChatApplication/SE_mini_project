@@ -15,7 +15,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 | P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
-| P6 | PRC-4: no feature merges after 30 Oct | 13 pull requests were merged between 31 Oct and 2 Nov: #196-#199, #200-#203 and #205-#209 | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. Defect fixes found while preparing the demo followed, which PRC-4 allows. |
+| P6 | PRC-4: no feature merges after 30 Oct | 16 pull requests were merged between 31 Oct and 2 Nov: #196-#199, #200-#203 and #205-#212 | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. |
 
 ## Technology
 
