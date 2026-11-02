@@ -1,54 +1,304 @@
+
 # Chat Application (Socket Programming) - Team 5
 
-Real-time web chat built with **Node.js, Express, Socket.IO, MongoDB and React**.
+A real-time web chat application built with **Node.js, Express, Socket.IO, MongoDB and React**.
+
 Software Engineering (UE24CS341A) mini-project.
 
-| Member | GitHub | Modules owned (SRS Appendix C) |
+## Team Members
+
+| Member | GitHub | Modules Owned |
 |---|---|---|
-| Prachi Jalan | Prachi-Jalan | AUTH, PRO (auth, profile, contacts) |
-| Omkar | omkar040806 | MSG, RCP (messaging, receipts) |
-| Pruthviraj Ajay Patil | Pruthviraj-A-Patil | PRS, GRP (presence, groups) |
-| Raksha Arun | rakshaarun29 | HIS, FIL, NOT (history, files, notifications) |
+| Prachi Jalan | Prachi-Jalan | AUTH, PRO - authentication, profiles, contacts |
+| Omkar | omkar040806 | MSG, RCP - messaging, delivery and read receipts |
+| Pruthviraj Ajay Patil | Pruthviraj-A-Patil | PRS, GRP - presence, typing and groups |
+| Raksha Arun | rakshaarun29 | HIS, FIL, NOT - history, files, search and notifications |
 
-## Folder layout (SAD 4.1)
+## Features
 
-```
-.
-├── Documents/            Part-1 deliverables (SRS, SAD, Test Plan)
-├── docs/                 project documentation
-├── server/               Node.js back end
-│   ├── src/
-│   │   ├── config/       environment configuration
-│   │   ├── models/       Mongoose schemas (C12)
-│   │   ├── services/     business logic (C4-C11)
-│   │   ├── middleware/   auth, validation, rate limit, errors
-│   │   ├── routes/       REST endpoints (C2), loaded automatically
-│   │   ├── sockets/      Socket.IO gateway (C3) and event handlers
-│   │   └── utils/        logger, errors, helpers
-│   ├── tests/            Jest unit + integration tests
-│   └── scripts/          seed, backup, performance scripts
-└── client/               React web client (C1)
-```
+- User registration and login with JWT authentication.
+- Password hashing and account lockout protection.
+- User profiles, avatars, search and contact management.
+- One-to-one and group conversations.
+- Real-time messaging using Socket.IO.
+- Offline message delivery and duplicate-message protection.
+- Message delivery and read receipts.
+- Online presence, last-seen status and typing indicators.
+- Paginated message history and keyword search.
+- Secure file and image sharing.
+- Per-conversation unread counts and notification mute preferences.
+- Group administration with member and admin roles.
 
-## Quick start
+## 1. Requirements
+
+Install the following before running the application:
+
+- Node.js 20 LTS recommended (the project specifies Node.js >=18).
+- npm.
+- MongoDB 6 or newer, either locally or through MongoDB Atlas.
+- Git.
+
+## 2. Installation
+
+Clone the repository:
 
 ```bash
-cp server/.env.example server/.env     # then edit the values
-npm install --prefix server
-npm run dev:server                      # http://localhost:5000/api/health
+git clone https://github.com/SE-miniproject-team5-ChatApplication/SE_mini_project.git
+cd SE_mini_project
 ```
 
-## Team workflow
+Install server and client dependencies:
 
-1. Pick your issue on the GitHub Project board and move it to **In Progress**.
-2. Create a branch: `feature/<ISSUE-ID>-short-name`, for example `feature/REQ-AUTH-1-register`.
-3. Commit with the issue ID in the message: `[REQ-AUTH-1] Register endpoint`.
-4. Open a Pull Request whose description contains `Closes #<issue number>`.
-5. CI must pass and a repo owner reviews and merges.
+```bash
+npm run install:all
+```
 
-## Database backup (NFR-SAFE-1)
+Create the server environment file.
 
-- Back up now: `npm run backup --prefix server`. This writes `server/backups/<time>/`, with one JSON file per collection, and keeps the newest 7 (change with `BACKUP_KEEP`, folder with `BACKUP_DIR`).
-- Run it daily, e.g. with cron at 2 am: `0 2 * * * cd /path/to/SE_mini_project && npm run backup --prefix server`
-- Restore (replaces all current data): `npm run restore --prefix server -- backups/<folder> --yes`
-- Backups contain password hashes. Never commit them; `server/backups/` is in `.gitignore`.
+**Windows PowerShell:**
+
+```powershell
+Copy-Item server/.env.example server/.env
+```
+
+**macOS / Linux / Git Bash:**
+
+```bash
+cp server/.env.example server/.env
+```
+
+Open `server/.env` and configure the required values.
+
+Important environment variables:
+
+| Variable | Purpose |
+|---|---|
+| `MONGO_URL` | MongoDB connection string |
+| `JWT_SECRET` | Secret used to sign authentication tokens |
+| `PORT` | Backend server port |
+| `CLIENT_ORIGIN` | Frontend development origin |
+
+Example MongoDB connection string:
+
+```text
+mongodb://127.0.0.1:27017/chatapp
+```
+
+Generate a secure JWT secret using:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+
+Do not commit `.env` files or expose secret values.
+
+## 3. Run the Application (Development)
+
+Start MongoDB before starting the application.
+
+Open two terminals from the project root.
+
+**Terminal 1 - Backend:**
+
+```bash
+npm run dev:server
+```
+
+The backend API and Socket.IO server run on:
+
+```text
+http://localhost:5000
+```
+
+Health endpoint:
+
+```text
+http://localhost:5000/api/health
+```
+
+**Terminal 2 - Frontend:**
+
+```bash
+npm run dev:client
+```
+
+Open the React application at:
+
+```text
+http://localhost:5173
+```
+
+## 4. Production / Demo Mode
+
+Build the frontend:
+
+```bash
+npm run build
+```
+
+Start the backend in production mode.
+
+**macOS / Linux:**
+
+```bash
+NODE_ENV=production npm start --prefix server
+```
+
+**Windows PowerShell:**
+
+```powershell
+$env:NODE_ENV="production"
+npm start --prefix server
+```
+
+The backend serves the built React application and API on port 5000.
+
+## 5. Testing and Code Quality
+
+The project uses Jest for unit and integration testing.
+
+### Configure the test database
+
+Create a file named `server/.env.test` manually.
+
+Add the following configuration:
+
+```env
+MONGO_URL=mongodb://127.0.0.1:27017/chatapp
+```
+
+The test setup automatically uses separate databases named `chatapp_test_1`, `chatapp_test_2`, etc., depending on the Jest worker.
+
+The test environment file is ignored by Git and should not be committed.
+
+### Run tests
+
+Run the server test suite:
+
+```bash
+npm test --prefix server
+```
+
+Run tests with code coverage:
+
+```bash
+npm run test:ci --prefix server
+```
+
+The CI coverage threshold requires at least **70% statement coverage**.
+
+Run the Test Plan traceability check:
+
+```bash
+npm run trace --prefix server
+```
+
+Run ESLint for the server and client:
+
+```bash
+npm run lint
+```
+
+Build the frontend:
+
+```bash
+npm run build
+```
+
+**Note:** Database integration tests are skipped when `MONGO_URL` is not configured. CI supplies the test database configuration automatically.
+
+## 6. Project Structure
+
+```text
+SE_mini_project/
+|
+|-- Documents/             Part-1 deliverables (SRS, SAD, Test Plan)
+|-- docs/                  Technical documentation
+|
+|-- server/
+|   |-- src/
+|   |   |-- config/        Environment and database configuration
+|   |   |-- models/        Mongoose database models
+|   |   |-- services/      Application business logic
+|   |   |-- middleware/    Authentication, validation and security
+|   |   |-- routes/        REST API endpoints
+|   |   |-- sockets/       Socket.IO gateway and event handlers
+|   |   |-- utils/         Shared utilities
+|   |
+|   |-- tests/             Jest unit and integration tests
+|   |-- scripts/           Backup, restore and traceability scripts
+|
+|-- client/
+    |-- src/
+        |-- pages/
+        |-- components/
+        |-- context/
+        |-- hooks/
+        |-- api/
+```
+
+## 7. API and Socket.IO Documentation
+
+| Document | Description |
+|---|---|
+| `docs/API.md` | REST API endpoints, request formats and responses |
+| `docs/SOCKET_EVENTS.md` | Socket.IO events, payloads and acknowledgements |
+| `docs/TRACEABILITY.md` | Test Plan cases mapped to test files |
+| `docs/SECURITY.md` | Security information |
+| `docs/BRANCH_PROTECTION.md` | GitHub branch protection instructions |
+
+## 8. Database Backup and Restore
+
+Create a database backup:
+
+```bash
+npm run backup --prefix server
+```
+
+Restore a backup:
+
+```bash
+npm run restore --prefix server -- backups/<folder> --yes
+```
+
+**Warning:** Restoring a backup replaces the existing database data.
+
+Backup files contain sensitive information, including password hashes. Never commit backup files to Git.
+
+## 9. Team Workflow
+
+1. Select an issue from the GitHub Project board and move it to **In Progress**.
+2. Update your local `main` branch:
+
+   ```bash
+   git switch main
+   git pull origin main
+   ```
+
+3. Create a feature branch:
+
+   ```bash
+   git switch -c feature/<ISSUE-ID>-short-name
+   ```
+
+4. Implement the issue and test your changes.
+5. Commit with the issue ID in the message:
+
+   ```bash
+   git commit -m "[ISSUE-ID] Description of changes"
+   ```
+
+6. Push the branch and create a Pull Request.
+7. Include `Closes #<issue number>` in the PR description.
+8. Ensure CI passes and obtain the required review before merging.
+
+## 10. Troubleshooting
+
+| Problem | Possible Solution |
+|---|---|
+| `MongooseServerSelectionError` | Ensure MongoDB is running and check `MONGO_URL`. |
+| `JWT_SECRET must be set` | Configure `JWT_SECRET` in `server/.env`. |
+| Frontend cannot connect to backend | Ensure the backend is running on port 5000 and check `CLIENT_ORIGIN`. |
+| Login or API requests return 401 | Check that the authentication token is present and valid. |
+| HTTP 429 errors | Check the configured API rate limits. |
+| Test database connection fails | Check `server/.env.test` and ensure the test MongoDB instance is available. |
