@@ -3,6 +3,9 @@
 Part-2 deliverable 2(i): every difference between what we documented and what we
 built is listed here with the reason. Explain these in the final demo.
 
+Section numbers refer to the versions named in the title. The updated documents in
+`Documents/Part-1 Deliverables/` are SRS v1.2, SAD v1.1 and Test Plan v1.1.
+
 ## Process and schedule
 
 | # | Document says | What we did | Why |
