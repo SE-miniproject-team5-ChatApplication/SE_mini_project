@@ -15,7 +15,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 | P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
-| P6 | PRC-4: no feature merges after 30 Oct | 13 pull requests were merged between 31 Oct and 2 Nov: #196-#199, #200-#203 and #205-#209 | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. |
+| P6 | PRC-4: no feature merges after 30 Oct | 13 pull requests were merged between 31 Oct and 2 Nov: #196-#199, #200-#203 and #205-#209 | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. Defect fixes found while preparing the demo followed, which PRC-4 allows. |
 
 ## Technology
 
@@ -73,7 +73,7 @@ These were moved to the Stretch backlog and were not finished by the end of Spri
 | B1 | Group admins can add only people from their own contacts (same rule as group creation, REQ-GRP-1). |
 | B2 | A member added to a group later can read the group's earlier history. |
 | B3 | Presence is shared with the user's contacts in both directions (people who added them, and people they added). |
-| B4 | Uploaded files are always sent as downloads (`Content-Disposition: attachment`). Only PNG images are shown as inline thumbnails, fetched with the login token (NFR-SAFE-3); REQ-FIL-3 says images in general, so JPG and GIF files appear as download links. |
+| B4 | Uploaded files are always sent as downloads (`Content-Disposition: attachment`). Images (JPG, PNG, GIF) are shown as inline thumbnails, fetched with the login token (NFR-SAFE-3). |
 | B5 | In `NODE_ENV=development`, requests from the same machine are not rate-limited, because all local browsers share one IP behind the dev proxy. Production and tests use the SRS limits (NFR-SEC-6). |
 | B6 | When an account is deleted, messages it already sent stay in the other participants' history as "Deleted user" (NFR-SEC-7, BR-4). |
 | B7 | Logging out ends only that session (that tab/device); other sessions of the same user stay logged in. |

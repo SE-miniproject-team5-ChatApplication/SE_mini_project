@@ -82,7 +82,7 @@ function snippetOf(content, q) {
   const i = content.toLowerCase().indexOf(q.toLowerCase());
   const start = Math.max(0, i - 40);
   const end = Math.min(content.length, i + q.length + 40);
-  return (start > 0 ? 'â€¦' : '') + content.slice(start, end) + (end < content.length ? 'â€¦' : '');
+  return (start > 0 ? '…' : '') + content.slice(start, end) + (end < content.length ? '…' : '');
 }
 
 // REQ-HIS-3: case-insensitive keyword search in one conversation or in all of

@@ -24,7 +24,7 @@ function validateContent(content, { hasAttachment = false } = {}) {
 
 function previewOf(message, attachment) {
   if (message.status === 'deleted') return 'This message was deleted';
-  if (!message.content && attachment) return `ðŸ“Ž ${attachment.fileName}`.slice(0, 120);
+  if (!message.content && attachment) return `📎 ${attachment.fileName}`.slice(0, 120);
   return (message.content || '').slice(0, 120);
 }
 

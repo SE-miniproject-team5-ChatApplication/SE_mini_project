@@ -7,7 +7,7 @@
 - Offline delivery, reconnect + resend without duplicates, delete message
 - Delivered/read receipts pushed live; typing indicator
 - Groups: create, admin actions, leave + admin succession, system messages
-- Keyword search with highlights; file type checks, authorised download, PNG thumbnails
+- Keyword search with highlights; file type checks, authorised download, image thumbnails
 - Unread badges, in-app and browser notifications
 - Input validation, rate limiting, error handling, daily backups, dashboard and search speed tests
 - Modular server structure, 70 % coverage gate and traceability check in CI

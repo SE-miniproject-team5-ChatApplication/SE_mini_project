@@ -178,7 +178,8 @@ mark { background: #ffe58a; color: inherit; padding: 0 1px; }
   height: 8px;
 }
 
-/* REQ-FIL-3: inline PNG thumbnails */
+/* REQ-FIL-3: inline image thumbnails */
+.attachment-preview { flex-basis: 100%; }
 .attachment-thumbnail {
   display: block;
   width: auto;
