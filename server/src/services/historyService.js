@@ -1,4 +1,10 @@
-// History Service (component C9): conversation list, paged history, search, export.
+
+// History Service (DD-HIS / component C9).
+// Module owner: Raksha Arun (SRS Appendix C).
+// Responsibility: conversation listing, paginated message history,
+// keyword search, and conversation-history support.
+// Route handlers delegate all history business logic to this service.
+
 const { Member, Conversation, User, Message } = require('../models');
 const { Errors } = require('../utils/errors');
 const { isValidId } = require('../utils/ids');
@@ -76,7 +82,7 @@ function snippetOf(content, q) {
   const i = content.toLowerCase().indexOf(q.toLowerCase());
   const start = Math.max(0, i - 40);
   const end = Math.min(content.length, i + q.length + 40);
-  return (start > 0 ? '…' : '') + content.slice(start, end) + (end < content.length ? '…' : '');
+  return (start > 0 ? 'â€¦' : '') + content.slice(start, end) + (end < content.length ? 'â€¦' : '');
 }
 
 // REQ-HIS-3: case-insensitive keyword search in one conversation or in all of

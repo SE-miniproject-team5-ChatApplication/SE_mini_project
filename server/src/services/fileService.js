@@ -1,4 +1,10 @@
 
+// File Service (DD-FIL / component C10).
+// Module owner: Raksha Arun (SRS Appendix C).
+// Responsibility: file-name sanitization, file-type validation,
+// attachment creation, and authorization of attachment downloads.
+// Physical file operations are delegated to fileStorage.js.
+
 const path = require('path');
 const FileType = require('file-type');
 const { Attachment } = require('../models');
@@ -76,6 +82,7 @@ function getZipEntryNames(buffer) {
   return names;
 }
 
+// Validates file content using its detected signature and expected extension.
 async function validateFile(file, fileName) {
   if (!file || !Buffer.isBuffer(file.buffer) || file.buffer.length === 0) {
     rejectUnsupportedType();
@@ -123,6 +130,7 @@ async function validateFile(file, fileName) {
   return { mimeType: ALLOWED_TYPES[extension] };
 }
 
+// Validates and stores an attachment belonging to a conversation member.
 async function createAttachment({ file, conversationId, uploaderId }) {
   if (!file) {
     throw Errors.validation('Choose a file to upload', 'file');
