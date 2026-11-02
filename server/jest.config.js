@@ -5,4 +5,8 @@ module.exports = {
   setupFiles: ['<rootDir>/tests/helpers/env.js'],
   testTimeout: 20000,
   collectCoverageFrom: ['src/**/*.js', '!src/server.js'],
+  // NFR-QA-5: backend statement coverage of at least 70 % (checked by `npm run test:ci` in CI).
+  coverageThreshold: {
+    global: { statements: 70 },
+  },
 };

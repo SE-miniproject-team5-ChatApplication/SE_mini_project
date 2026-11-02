@@ -1,4 +1,3 @@
-
 const request = require('supertest');
 
 const {
@@ -11,7 +10,7 @@ const { startTestServer } = require('../helpers/server');
 const { createUser } = require('../helpers/factory');
 const { createDirectChat } = require('../helpers/chat');
 
-describe('NFR-SAFE-3 secure attachment downloads', () => {
+describe('TC-FIL-03 REQ-FIL-4 NFR-SAFE-3 secure attachment downloads', () => {
   let srv;
 
   beforeAll(async () => {
