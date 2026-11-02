@@ -12,7 +12,7 @@ const { AppError } = require('./utils/errors');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requireAuthExceptPublic } = require('./middleware/auth');
 const { sanitizeBody } = require('./middleware/sanitize');
-const { rejectOperatorKeys } = require('./middleware/validate');
+const { rejectUnsafeKeys } = require('./middleware/rejectUnsafeKeys');
 const { createRestLimiter } = require('./middleware/rateLimit');
 
 function loadRoutes(app) {
@@ -35,6 +35,8 @@ function serveClient(app) {
 function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  // NFR-SEC-5: query values are always plain strings, never objects like ?a[$ne]=1
+  app.set('query parser', 'simple');
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -46,7 +48,7 @@ function createApp() {
   app.use(cors({ origin: config.clientOrigin }));
   app.use('/api', createRestLimiter()); // NFR-SEC-6: 100 requests / minute / IP
   app.use(express.json({ limit: '100kb' }));
-  app.use(rejectOperatorKeys); // NFR-SEC-5
+  app.use(rejectUnsafeKeys); // NFR-SEC-5
   app.use(sanitizeBody);
   app.use((req, _res, next) => {
     req.id = crypto.randomUUID();
