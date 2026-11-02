@@ -25,6 +25,14 @@ describeDb('REQ-HIS-3 / REQ-HIS-4 keyword search', () => {
     expect(lower.body[0].snippet).toContain('meeting');
   });
 
+  test('TC-HIS-02 a long message is shortened with an ellipsis on both sides', async () => {
+    const { a, conversationId } = await createDirectChat();
+    const padding = 'x'.repeat(60);
+    await createMessage({ conversationId, senderId: a.id, content: `${padding} meeting ${padding}` });
+    const res = await search(a, { q: 'meeting' });
+    expect(res.body[0].snippet).toMatch(/^….*meeting.*…$/);
+  });
+
   test('TC-HIS-02 user C (not a participant) gets none of the other users\' messages', async () => {
     const { a, conversationId } = await createDirectChat();
     await createMessage({ conversationId, senderId: a.id, content: 'Team meeting at 5' });

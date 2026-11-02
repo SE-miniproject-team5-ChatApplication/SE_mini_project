@@ -10,11 +10,23 @@ Repeat the run and update this page when v1.0 is tagged (PRC-4).
 | Automated tests (passed / total) | CI, Linux, Node 20: 222 / 222. Local, Windows, Node 22: 221 / 222 |
 | Statement coverage (target >= 70 %) | 94.52 % (CI) |
 | Test Plan cases implemented (`npm run trace`) | 37 / 42 |
-| Manual cases executed (USAB, browser, reliability) | None recorded |
+| Manual cases executed (USAB, browser, reliability) | Sprint 2 video script run in a headless browser: 37 checks passed. Other manual cases not recorded |
 | Open defects (critical / high / medium / low) | 0 / 0 / 0 / 0 (no open `bug` issues) |
 
 The one local failure is `TC-SAFE-02 backup files are readable by the owner only`. It checks
 Unix file permissions, which Windows does not have, and it passes on Linux.
+
+## Defects found by the browser run
+
+The automated tests cover the server, so these client-visible defects passed CI. All four are
+fixed. The table above was measured before the fixes, and PRC-4 repeats the run.
+
+| Defect | Requirement | Cause |
+|---|---|---|
+| Image previews never appeared | REQ-FIL-3 | The client requested `/api/api/files/...` |
+| Attachments could not be downloaded | REQ-FIL-4 | A plain link cannot send the login token |
+| Garbled paperclip in the chat list preview | REQ-FIL-1 | Damaged text encoding in `messageService.js` |
+| Garbled ellipsis in long search results | REQ-HIS-3 | Damaged text encoding in `historyService.js` |
 
 ## Results by area
 

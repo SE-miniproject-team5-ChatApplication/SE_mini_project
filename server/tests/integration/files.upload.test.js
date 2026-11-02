@@ -13,7 +13,7 @@ const { startTestServer } = require('../helpers/server');
 const { connectClient, emitAck } = require('../helpers/socket');
 const { createUser } = require('../helpers/factory');
 const { createDirectChat } = require('../helpers/chat');
-const { Attachment } = require('../../src/models');
+const { Attachment, Conversation } = require('../../src/models');
 
 // Small file fixtures for upload validation.
 const PNG = Buffer.from(
@@ -208,6 +208,9 @@ describeDb('File uploads and REQ-FIL-2 type validation', () => {
     expect(ack.ok).toBe(true);
     expect(ack.message.type).toBe('file');
     expect(ack.message.attachment.fileName).toBe('photo.png');
+
+    const conversation = await Conversation.findById(conversationId);
+    expect(conversation.lastMessage.preview).toBe('📎 photo.png');
   });
 
   test.each([

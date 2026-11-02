@@ -1,6 +1,6 @@
-
-import { useEffect, useState } from 'react';
-import { http } from '../api/http.js';
+import { useState } from 'react';
+import { useAuthBlobUrl } from '../hooks/useAuthBlobUrl.js';
+import { downloadFile } from '../utils/download.js';
 
 export function formatSize(bytes = 0) {
   if (bytes < 1024) return `${bytes} B`;
@@ -10,85 +10,45 @@ export function formatSize(bytes = 0) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function isPng(mimeType, fileName) {
-  return mimeType === 'image/png' || /\.png$/i.test(fileName || '');
+function isImage(mimeType, fileName) {
+  return /^image\//.test(mimeType || '') || /\.(jpe?g|png|gif)$/i.test(fileName || '');
 }
 
-function isPdf(mimeType, fileName) {
-  return mimeType === 'application/pdf' || /\.pdf$/i.test(fileName || '');
+// REQ-FIL-3: the file is fetched with the login token, which an <img> cannot send.
+function Thumbnail({ url, fileName }) {
+  const src = useAuthBlobUrl(url);
+  if (!src) return null;
+  return (
+    <div className="attachment-preview">
+      <img className="attachment-thumbnail" src={src} alt={fileName || 'Uploaded image'} />
+    </div>
+  );
 }
 
+// REQ-FIL-3, REQ-FIL-4: images as an inline thumbnail; every file has its name,
+// size and a Download button.
 export default function AttachmentView({ attachment }) {
-  const [imageUrl, setImageUrl] = useState('');
-  const [imageError, setImageError] = useState(false);
+  const [error, setError] = useState('');
+  const { fileName, mimeType, size } = attachment;
+  const attachmentId = attachment.attachmentId || attachment.id;
+  const url = attachment.url || (attachmentId ? `/api/files/${encodeURIComponent(attachmentId)}` : '');
 
-  const attachmentUrl = attachment.url ||
-    (attachment.attachmentId || attachment.id
-      ? `/api/files/${encodeURIComponent(
-          attachment.attachmentId || attachment.id
-        )}`
-      : '');
-
-  const mimeType = attachment.mimeType;
-  const fileName = attachment.fileName;
-  const size = attachment.size;
-  const png = isPng(mimeType, fileName);
-  const pdf = isPdf(mimeType, fileName);
-
-  useEffect(() => {
-    let objectUrl;
-    let cancelled = false;
-
-    if (!attachmentUrl || !png) {
-      setImageUrl('');
-      setImageError(false);
-      return undefined;
-    }
-
-    http.get(attachmentUrl, { responseType: 'blob' })
-      .then(({ data }) => {
-        if (cancelled) return;
-
-        objectUrl = URL.createObjectURL(data);
-        setImageUrl(objectUrl);
-        setImageError(false);
-      })
-      .catch(() => {
-        if (!cancelled) setImageError(true);
-      });
-
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [attachmentUrl, png]);
+  const onDownload = () => {
+    setError('');
+    downloadFile(url, fileName).catch(() => setError('Download failed'));
+  };
 
   return (
     <div className="attachment">
-      {png && imageUrl && !imageError && (
-        <img
-          className="attachment-thumbnail"
-          src={imageUrl}
-          alt={fileName || 'Uploaded image'}
-          loading="lazy"
-        />
+      {url && isImage(mimeType, fileName) && <Thumbnail url={url} fileName={fileName} />}
+      <span>{fileName}</span>
+      <span className="muted small">({formatSize(size)})</span>
+      {url && (
+        <button type="button" className="link-btn" onClick={onDownload}>
+          Download
+        </button>
       )}
-
-      {png && imageError && (
-        <span className="muted small">
-          Image preview unavailable
-        </span>
-      )}
-
-      {(pdf || !png) && attachmentUrl && (
-        <a href={attachmentUrl} download>
-          {fileName}
-        </a>
-      )}
-
-      <span className="muted small">
-        ({formatSize(size)})
-      </span>
+      {error && <span className="field-error small">{error}</span>}
     </div>
   );
 }
