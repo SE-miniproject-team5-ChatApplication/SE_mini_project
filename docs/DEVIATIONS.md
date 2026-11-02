@@ -1,0 +1,76 @@
+# Deviations from the Part-1 documents (SRS v1.1, SAD v1.0, Test Plan v1.0)
+
+Part-2 deliverable 2(i): every difference between what we documented and what we
+built is listed here with the reason. Explain these in the final demo.
+
+## Process and schedule
+
+| # | Document says | What we did | Why |
+|---|---|---|---|
+| P1 | SAD 4.6: four sprints (skeleton+auth; messaging, presence, groups; receipts, history, files, notifications; hardening) | A dry-run week (12-16 Oct), Sprint 1 (19-23 Oct), Sprint 2 (26 Oct - 2 Nov) and a Stretch list | The Part-2 brief fixed two sprints. Items were re-planned in the GitHub Project (backlog "Sprint" field). |
+| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Latency, capacity, fan-out and usability tests were not run (see "Requirements not delivered"). |
+| P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`) | Fewer tools to install on student laptops. |
+| P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
+| P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
+| P6 | PRC-4: no feature merges after 30 Oct | 13 pull requests were merged between 31 Oct and 2 Nov: #196-#199, #200-#203 and #205-#209 | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. |
+
+## Technology
+
+| # | Document says | What we did | Why |
+|---|---|---|---|
+| T1 | SRS 3.2: bcrypt 5.x | `bcryptjs` 3.x | Pure JavaScript - no native build tools needed on Windows (NFR-QA-6). Same `$2b$` hash format, cost factor at least 10 (REQ-AUTH-3 unchanged). |
+| T2 | SRS 3.2: Multer 1.x | Multer 2.x | Multer 1.x has known security vulnerabilities; 2.x fixes them with the same API. |
+| T3 | SAD 3.6: express-validator | Own validation functions in each service, plus `middleware/rejectUnsafeKeys.js` and `utils/unsafeKeys.js` for NoSQL injection | Simpler, fewer dependencies. |
+| T4 | SRS 2.4: Node.js 18 LTS | Node.js 20 LTS recommended (CI uses 20); `engines` still allows >= 18 | Node 18 reached end-of-life in April 2025. |
+| T5 | SAD 4.6 open issue: plain CSS or Tailwind | Plain CSS (`client/src/styles.css`) | No build plugin needed; small app. |
+| T6 | SAD 4.4: pino logging | pino, with password/token/message fields redacted | (as planned - listed because redaction paths are a design detail added) |
+| T7 | SRS 3.2: MongoDB 6.x | MongoDB 6 or newer (README); CI uses MongoDB 7 | All automated tests pass on MongoDB 7 in CI. |
+
+## Code structure
+
+| # | Document says | What we did | Why |
+|---|---|---|---|
+| S1 | SAD 4.1 and SRS Appendix C: code under `server/routes/`, `server/sockets/` | Code is under `server/src/`; socket handlers are in `server/src/sockets/handlers/` | Separates source from `tests/` and `scripts/` in the server folder. |
+| S2 | SAD 4.1: `sockets/groupHandler.js` | No group socket handler. Group changes go through `groupService.js`, which sends `group:update`; group messages use `messageHandler.js` | Group changes arrive over REST, so no separate handler was needed. |
+| S3 | SAD 4.1: one route file per design unit | Extra route files `contacts.js`, `conversations.js`, `health.js`, `presence.js` and `search.js` | Keeps each file to one responsibility (NFR-QA-4). |
+
+## Data model and API
+
+| # | Document says | What we did | Why |
+|---|---|---|---|
+| D1 | SRS 7: six collections | A seventh collection `revokedtokens` (auto-expiring) | REQ-AUTH-6 + REQ-AUTH-7: a logged-out token must stop working before its 24 h expiry. |
+| D2 | Appendix B.2: status includes "deleted" | Status `deleted` plus `deletedAt`; the original text stays in the database but is never returned | BR-4: "deletion does not remove the record for audit but hides its content". |
+| D3 | SAD 4.3 endpoint list | Added: `POST /api/conversations/direct`, `GET /api/groups/:id`, `GET /api/presence`, `GET /api/users/:id/avatar`, `DELETE /api/users/me`, `GET /api/health`. Changed: removing a member is `DELETE /api/groups/:id/members/:userId` (no request body). Not built: `GET /api/conversations/:id/export` (REQ-HIS-5) | Needed to start direct chats (BR-2), show group info (REQ-GRP-2), initial presence (REQ-PRS-1), show avatars, delete accounts (NFR-SEC-7) and check the server is up. Full list: `docs/API.md`. |
+| D4 | SAD 4.3.6: `message:ack` event | `message:ack` event **and** the Socket.IO acknowledgement callback; extra event `session:ready` | The callback lets the client match each ack to its message without extra bookkeeping. Full list: `docs/SOCKET_EVENTS.md`. |
+| D5 | SRS 7 / NFR-PERF-4: text index for search | The text index exists, but search uses a case-insensitive pattern match limited to the user's conversations | MongoDB text search only matches whole words; REQ-HIS-3 users expect "meet" to find "meeting". Tested within the 2 s limit on 10,000 messages (TC-PERF-03). |
+| D6 | SAD 4.3.6: `notification:unread` event | Event not implemented. Unread counts come from `GET /api/conversations`; a count is reset by the `message:read` event | The client already refreshes the conversation list, so no separate event was needed. |
+
+## Requirements not delivered
+
+These were moved to the Stretch backlog and were not finished by the end of Sprint 2. Their issues are still open.
+
+| Requirement | Issue | State | Test case |
+|---|---|---|---|
+| REQ-RCP-5 group read receipts | #37 | Partial: the group read rule works on the server; the sender cannot view per-member status | TC-RCP-02 (rule only) |
+| REQ-HIS-5 CSV export | #52 | Not built | TC-HIS-03 not run |
+| REQ-NOT-4 mute a conversation | #61 | Partial: the server API works and the client respects a muted conversation, but the UI has no mute control | TC-NOT-02 not run |
+| NFR-PERF-1 latency at 100 users | #62 | Not measured | TC-PERF-01 not run |
+| NFR-PERF-2 200 connections | #63 | Not measured | TC-PERF-01 not run |
+| NFR-PERF-5 group fan-out | #66 | Not measured | TC-PERF-04 not run |
+| NFR-SEC-3 TLS | #73 | Not built | TC-SEC-03 partly run |
+| NFR-QA-1 first message within 3 min | #78 | Not measured | TC-USAB-01 not run |
+| NFR-QA-3 availability 99 % | #80 | Not measured | - |
+| NFR-QA-6 portability | #83 | Not confirmed: tests run on Windows and Linux, not on macOS | - |
+| NFR-QA-7 scalability | #129 | Open | - |
+
+## Behaviour the SRS did not specify, or that differs from it (our decisions)
+
+| # | Decision |
+|---|---|
+| B1 | Group admins can add only people from their own contacts (same rule as group creation, REQ-GRP-1). |
+| B2 | A member added to a group later can read the group's earlier history. |
+| B3 | Presence is shared with the user's contacts in both directions (people who added them, and people they added). |
+| B4 | Uploaded files are always sent as downloads (`Content-Disposition: attachment`). Only PNG images are shown as inline thumbnails, fetched with the login token (NFR-SAFE-3); REQ-FIL-3 says images in general, so JPG and GIF files appear as download links. |
+| B5 | In `NODE_ENV=development`, requests from the same machine are not rate-limited, because all local browsers share one IP behind the dev proxy. Production and tests use the SRS limits (NFR-SEC-6). |
+| B6 | When an account is deleted, messages it already sent stay in the other participants' history as "Deleted user" (NFR-SEC-7, BR-4). |
+| B7 | Logging out ends only that session (that tab/device); other sessions of the same user stay logged in. |
