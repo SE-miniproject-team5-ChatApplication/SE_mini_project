@@ -1,4 +1,9 @@
 
+// File Routes (DD-FIL / component C10).
+// Module owner: Raksha Arun (SRS Appendix C).
+// Responsibility: authenticated file upload and download endpoints.
+// File validation and attachment operations are delegated to fileService.js.
+
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -9,6 +14,7 @@ const { MAX_FILE_SIZE } = require('../models/Attachment');
 const fileService = require('../services/fileService');
 
 const router = express.Router();
+
 router.use(requireAuth);
 
 // Keep uploaded files in memory until validated by the file service.
@@ -17,6 +23,7 @@ const upload = multer({
   limits: { fileSize: MAX_FILE_SIZE, files: 1, fields: 5 },
 });
 
+// Converts Multer errors into consistent application errors.
 function singleFile(req, res, next) {
   upload.single('file')(req, res, (err) => {
     if (!err) return next();
@@ -36,7 +43,7 @@ function singleFile(req, res, next) {
   });
 }
 
-// POST /api/files — upload a validated attachment.
+// POST /api/files - upload one validated attachment.
 router.post(
   '/',
   singleFile,
@@ -54,7 +61,7 @@ router.post(
   })
 );
 
-// GET /api/files/:id — securely download an authorized attachment.
+// GET /api/files/:id - securely download an authorized attachment.
 router.get(
   '/:id',
   asyncHandler(async (req, res) => {
@@ -87,4 +94,7 @@ router.get(
   })
 );
 
-module.exports = { basePath: '/api/files', router };
+module.exports = {
+  basePath: '/api/files',
+  router,
+};

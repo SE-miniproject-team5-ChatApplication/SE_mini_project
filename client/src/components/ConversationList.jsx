@@ -72,9 +72,8 @@ export default function ConversationList() {
     return () => clearTimeout(timer);
   }, [activeConversation?.id, refresh]);
 
-  // REQ-NOT-2: show an in-app notification and, when permission
-  // is granted, a browser notification for incoming messages
-  // in conversations that are not currently open.
+  // DD-NOT: muted conversations still receive messages and count unread
+  // messages, but do not show in-app or browser notifications.
   useSocketEvent('message:new', (message) => {
     if (!message || !user?.id) return;
     if (String(message.senderId) === String(user.id)) return;
@@ -90,6 +89,9 @@ export default function ConversationList() {
       (item) => String(item.id) === String(message.conversationId)
     );
 
+    // Respect this user's mute preference for this conversation.
+    if (conversation?.muted === true) return;
+
     const conversationName = conversation?.name || 'New conversation';
     const messageText = message.content || 'Sent an attachment';
     const notificationText = `${conversationName}: ${messageText}`;
@@ -98,7 +100,7 @@ export default function ConversationList() {
     setNotification(notificationText);
     setNotificationId((previous) => previous + 1);
 
-    // Browser notification, only when the user has granted permission.
+    // Browser notification, only when permission is granted.
     if (
       typeof window !== 'undefined' &&
       'Notification' in window &&
@@ -206,10 +208,7 @@ export default function ConversationList() {
         )}
 
         {browserPermission === 'unsupported' && (
-          <span
-            className="muted small"
-            role="status"
-          >
+          <span className="muted small" role="status">
             Browser notifications unavailable
           </span>
         )}

@@ -1,9 +1,12 @@
 
-// Delivery and read receipts (REQ-RCP-1..5). A message status only moves
-// forward: sent -> delivered -> read (deleted is final, see REQ-MSG-8).
-const { Message, Member } = require('../models');
+// Receipt Service (REQ-RCP-1..5).
+// Owns message delivery/read receipts and message status transitions.
+// Unread-count operations are delegated to the DD-NOT Notification Service.
+
+const { Message } = require('../models');
 const { isValidId } = require('../utils/ids');
 const { isMember, memberUserIds } = require('./membershipService');
+const notificationService = require('./notificationService');
 
 const STATUS_RANK = { sent: 0, delivered: 1, read: 2, deleted: 3 };
 
@@ -78,7 +81,7 @@ function markDelivered(userId, messageId) {
 }
 
 // REQ-RCP-3: the recipient has the conversation open and the message is shown.
-// REQ-NOT-1: reset that member's unread count when the conversation is read.
+// DD-NOT: unread-count reset is delegated to notificationService.
 // With {conversationId} every unread message from others in it is marked read;
 // with {messageId} only that message.
 async function markRead(userId, { messageId, conversationId } = {}) {
@@ -87,16 +90,8 @@ async function markRead(userId, { messageId, conversationId } = {}) {
   if (isValidId(conversationId)) {
     if (!(await isMember(userId, conversationId))) return [];
 
-    // REQ-NOT-1: reset this user's unread count and record when they last read.
-    await Member.updateOne(
-      { conversationId, userId },
-      {
-        $set: {
-          unreadCount: 0,
-          lastReadAt: new Date(),
-        },
-      }
-    );
+    // DD-NOT: reset this member's unread counter through the Notification Service.
+    await notificationService.resetUnreadCount(userId, conversationId);
 
     const unread = await Message.find({
       conversationId,

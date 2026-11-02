@@ -1,11 +1,14 @@
 
 // Messaging Service (component C6).
+// Notification-related unread-count updates are delegated to DD-NOT.
+
 const { Message, Conversation, Attachment, Member } = require('../models');
 const { MAX_CONTENT_LENGTH } = require('../models/Message');
 const { Errors } = require('../utils/errors');
 const { sanitizeText } = require('../middleware/sanitize');
 const { isValidId } = require('../utils/ids');
 const { emitToConversation } = require('../utils/realtime');
+const notificationService = require('./notificationService');
 
 // REQ-MSG-4 / BR-5: no empty messages, at most 2000 characters.
 // A message with an attachment may have no text (Appendix B.2).
@@ -21,7 +24,7 @@ function validateContent(content, { hasAttachment = false } = {}) {
 
 function previewOf(message, attachment) {
   if (message.status === 'deleted') return 'This message was deleted';
-  if (!message.content && attachment) return `📎 ${attachment.fileName}`.slice(0, 120);
+  if (!message.content && attachment) return `ðŸ“Ž ${attachment.fileName}`.slice(0, 120);
   return (message.content || '').slice(0, 120);
 }
 
@@ -62,7 +65,7 @@ async function findOwnAttachment(attachmentId, senderId, conversationId) {
 }
 
 // REQ-MSG-1: store a text message sent by a member of the conversation.
-// REQ-NOT-1: increment unread counts for all recipients, excluding the sender.
+// DD-NOT: unread-count updates are handled by notificationService.
 async function createMessage({
   conversationId,
   senderId,
@@ -115,16 +118,8 @@ async function createMessage({
       }
     ),
 
-    // REQ-NOT-1: every other member gets one unread message.
-    Member.updateMany(
-      {
-        conversationId,
-        userId: { $ne: senderId },
-      },
-      {
-        $inc: { unreadCount: 1 },
-      }
-    ),
+    // DD-NOT: delegate recipient unread-count updates to the Notification Service.
+    notificationService.incrementUnreadCounts(conversationId, senderId),
   ]);
 
   if (attachment) message.attachmentId = attachment;
