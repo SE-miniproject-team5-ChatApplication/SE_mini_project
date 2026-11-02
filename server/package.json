@@ -1,7 +1,6 @@
-
 {
   "name": "chat-application-server",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Node.js + Express + Socket.IO server for the Team 5 chat application",
   "main": "src/server.js",

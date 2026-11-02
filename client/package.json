@@ -1,6 +1,6 @@
 {
   "name": "chat-application-client",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "React web client (C1) for the Team 5 chat application",

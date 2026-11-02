@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.0] - 2026-11-02 (development frozen)
+
+Tagged `v1.0`. Only defect fixes after this, on a `hotfix/` branch.
 
 ### Sprint 2 (26 Oct - 2 Nov 2026)
 - Account lock-out; profile page with display name, status, avatar, password change and account deletion
