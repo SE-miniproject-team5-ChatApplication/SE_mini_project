@@ -37,6 +37,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test:ci --if-present
+      - name: Every Test Plan case is implemented (NFR-QA-5)
+        run: npm run trace --if-present
 
   client:
     name: client (lint + build)

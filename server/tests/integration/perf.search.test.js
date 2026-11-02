@@ -19,12 +19,13 @@ describeDb('NFR-PERF-4 search over 10,000 messages <= 2 s', () => {
     await connectTestDb();
     data = await seedPerfData({ conversations: 100, messages: 10000 });
   }, 60000);
+
   afterAll(async () => {
     await clearTestDb();
     await disconnectTestDb();
   });
 
-  test('TC-PERF-04 a rare word across all conversations is found in under 2 s', async () => {
+  test('TC-PERF-03 a rare word across all conversations is found in under 2 s', async () => {
     const { res, ms } = await timed(() => search({ q: 'RAREWORD' }));
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(10);
@@ -32,28 +33,28 @@ describeDb('NFR-PERF-4 search over 10,000 messages <= 2 s', () => {
     expect(ms).toBeLessThan(2000);
   });
 
-  test('TC-PERF-04 a common phrase returns the newest 50 matches in under 2 s', async () => {
+  test('TC-PERF-03 a common phrase returns the newest 50 matches in under 2 s', async () => {
     const { res, ms } = await timed(() => search({ q: 'exam notes' }));
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(50);
     expect(ms).toBeLessThan(2000);
   });
 
-  test('TC-PERF-04 searching inside one conversation takes under 2 s', async () => {
+  test('TC-PERF-03 searching inside one conversation takes under 2 s', async () => {
     const { res, ms } = await timed(() => search({ q: 'rareword', conversationId: data.bigConversationId }));
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(10);
     expect(ms).toBeLessThan(2000);
   });
 
-  test('TC-PERF-04 worst case (no match, all 10,000 checked) takes under 2 s', async () => {
+  test('TC-PERF-03 worst case (no match, all 10,000 checked) takes under 2 s', async () => {
     const { res, ms } = await timed(() => search({ q: 'nothing-matches-this' }));
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
     expect(ms).toBeLessThan(2000);
   });
 
-  test('TC-PERF-04 the search query is narrowed by the conversation index, not a full scan', async () => {
+  test('TC-PERF-03 the search query is narrowed by the conversation index, not a full scan', async () => {
     const explain = await Message.find({
       conversationId: { $in: [data.bigConversationId] },
       type: { $ne: 'system' },

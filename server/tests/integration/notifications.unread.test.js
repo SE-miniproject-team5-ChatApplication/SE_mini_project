@@ -1,4 +1,3 @@
-
 const {
   describeDb,
   connectTestDb,
@@ -13,7 +12,7 @@ const { createGroupWith } = require('../helpers/group');
 const { eventually } = require('../helpers/wait');
 const { Member } = require('../../src/models');
 
-describeDb('REQ-NOT-1 unread message counts', () => {
+describeDb('TC-NOT-01 REQ-NOT-1 unread message counts', () => {
   let srv;
   const sockets = [];
 
