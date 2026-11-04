@@ -56,7 +56,7 @@ const TEST_CASES = {
 };
 
 // Backlog items in the "Stretch" column: missing tests are warnings, not errors.
-const STRETCH = new Set(['TC-HIS-03', 'TC-NOT-02', 'TC-PERF-01', 'TC-PERF-04', 'TC-USAB-01']);
+const STRETCH = new Set(['TC-HIS-03', 'TC-NOT-02', 'TC-PERF-04', 'TC-USAB-01']);
 
 function filesUnder(dir, exts) {
   if (!fs.existsSync(dir)) return [];

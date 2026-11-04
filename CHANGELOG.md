@@ -4,8 +4,9 @@
 
 Tagged `v1.0`. Only defect fixes after this, on a `hotfix/` branch.
 
-### Stretch item finished before the release (3-4 Nov 2026)
+### Stretch items finished before the release (3-4 Nov 2026)
 - Group read receipts: read only when every current member has read it; the sender can see each member's status
+- Message latency load test: with 100 users, 95 % of messages arrive within 40 ms (`npm run perf:latency`)
 
 ### Sprint 2 (26 Oct - 2 Nov 2026)
 - Account lock-out; profile page with display name, status, avatar, password change and account deletion
