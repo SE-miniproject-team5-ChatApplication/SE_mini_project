@@ -1,6 +1,9 @@
-# Message latency (NFR-PERF-1, TC-PERF-01)
+# Performance load tests (NFR-PERF-1, NFR-PERF-2, TC-PERF-01)
 
-NFR-PERF-1: with 100 concurrent users, 95 % of messages reach the online recipient within 500 ms.
+- NFR-PERF-1: with 100 concurrent users, 95 % of messages reach the online recipient within 500 ms.
+- NFR-PERF-2: the server supports at least 200 simultaneous WebSocket connections without message loss.
+
+## Message latency (NFR-PERF-1)
 
 ## How to run it
 
@@ -44,5 +47,23 @@ freshly started server for each set of runs.
   fresh server gave 23-36 ms. Its memory use was normal (50 MB). The cause was not found; a
   longer test is part of NFR-QA-3 (availability).
 
-Capacity with 200 connections (NFR-PERF-2) is the other half of TC-PERF-01 and is not measured
-yet.
+## Capacity (NFR-PERF-2)
+
+Run: `npm run perf:capacity --prefix server` (options `--users 200`, `--messages 5`).
+
+The script opens 200 connections (100 direct chats). Every user then sends one message a second
+for 5 seconds, all at the same moment, which is harder than real use. A message only counts if
+the server acknowledged it within 10 s (so it was stored, REQ-MSG-3) and it reached the
+recipient. The server must still answer `/api/health` afterwards.
+
+Results (4 Nov 2026, same laptop, freshly started server):
+
+| Connections | Messages | Acknowledged | Received | Result |
+|---|---|---|---|---|
+| 200 | 1000 | 1000 | 1000 | Pass |
+| 200 (repeated) | 1000 | 1000 | 1000 | Pass |
+| 300 | 1500 | 1498 | 1500 | Fail: 2 acknowledgements took over 10 s |
+| 400 | 2000 | 1722 | 2000 | Fail: 278 acknowledgements took over 10 s |
+
+At 300 and 400 connections every message was still stored and delivered; only some
+acknowledgements were late, because 300-400 messages arrive in the same instant.

@@ -11,12 +11,12 @@ Section numbers refer to the versions named in the title. The updated documents 
 | # | Document says | What we did | Why |
 |---|---|---|---|
 | P1 | SAD 4.6: four sprints (skeleton+auth; messaging, presence, groups; receipts, history, files, notifications; hardening) | A dry-run week (12-16 Oct), Sprint 1 (19-23 Oct), Sprint 2 (26 Oct - 2 Nov) and a Stretch list | The Part-2 brief fixed two sprints. Items were re-planned in the GitHub Project (backlog "Sprint" field). |
-| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency was measured with a load script (`docs/testing/PERFORMANCE.md`); capacity, fan-out and usability tests were not run (see "Requirements not delivered"). |
-| P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`); message latency is a Node load script (`server/scripts/perf/latency.js`) | Fewer tools to install on student laptops. |
+| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency and capacity were measured with load scripts (`docs/testing/PERFORMANCE.md`); fan-out and usability tests were not run (see "Requirements not delivered"). |
+| P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`); message latency and capacity are Node load scripts (`server/scripts/perf/`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
-| P6 | PRC-4: no feature merges after 30 Oct | 19 pull requests were merged between 31 Oct and 4 Nov: #196-#199, #200-#203, #205-#213 and the REQ-RCP-5 and NFR-PERF-1 pull requests | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. REQ-RCP-5 and NFR-PERF-1 were finished from the Stretch backlog before v1.0 was tagged. |
-| P7 | SRS NFR-PERF-1 / Test Plan TC-PERF-01: 100 users on a LAN, Artillery script | One laptop runs the server, MongoDB and 100 simulated users; each user sends one message every 5 s, spread evenly; latency is measured to the recipient's connection, not the screen (`docs/testing/PERFORMANCE.md`) | The SRS gives no message rate. One machine is a harder test than a LAN, and the script needs no extra tools. |
+| P6 | PRC-4: no feature merges after 30 Oct | 22 pull requests were merged between 31 Oct and 4 Nov: #196-#199, #200-#203, #205-#217 and the NFR-PERF-2 pull request | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. REQ-RCP-5, REQ-HIS-5, REQ-NOT-4, NFR-PERF-1 and NFR-PERF-2 were finished from the Stretch backlog before v1.0 was tagged. |
+| P7 | SRS NFR-PERF-1 / Test Plan TC-PERF-01: 100 users on a LAN, Artillery script | One laptop runs the server, MongoDB and 100 simulated users; each user sends one message every 5 s, spread evenly; latency is measured to the recipient's connection, not the screen. For capacity, 200 users each send one message a second (`docs/testing/PERFORMANCE.md`) | The SRS gives no message rate. One machine is a harder test than a LAN, and the script needs no extra tools. |
 
 ## Technology
 
@@ -57,7 +57,6 @@ These were moved to the Stretch backlog and were not finished by the end of Spri
 |---|---|---|---|
 | REQ-HIS-5 CSV export | #52 | Not built | TC-HIS-03 not run |
 | REQ-NOT-4 mute a conversation | #61 | Partial: the server API works and the client respects a muted conversation, but the UI has no mute control | TC-NOT-02 not run |
-| NFR-PERF-2 200 connections | #63 | Not measured | TC-PERF-01 partly run (latency only) |
 | NFR-PERF-5 group fan-out | #66 | Not measured | TC-PERF-04 not run |
 | NFR-SEC-3 TLS | #73 | Not built | TC-SEC-03 partly run |
 | NFR-QA-1 first message within 3 min | #78 | Not measured | TC-USAB-01 not run |
