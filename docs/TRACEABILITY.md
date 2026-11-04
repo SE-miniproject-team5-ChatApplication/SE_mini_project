@@ -38,7 +38,7 @@ Every automated test title starts with its TC id, so `npx jest -t TC-MSG-01` run
 | TC-FIL-03 | REQ-FIL-4, NFR-SAFE-3 | `server/tests/integration/files.download.test.js` |
 | TC-NOT-01 | REQ-NOT-1..3 | `server/tests/integration/notifications.unread.test.js` |
 | TC-NOT-02 | REQ-NOT-4 | stretch - not yet |
-| TC-PERF-01 | NFR-PERF-1, NFR-PERF-2 | `server/scripts/perf/latency.js`<br>`docs/testing/PERFORMANCE.md` |
+| TC-PERF-01 | NFR-PERF-1, NFR-PERF-2 | `server/scripts/perf/capacity.js`<br>`server/scripts/perf/latency.js`<br>`docs/testing/PERFORMANCE.md` |
 | TC-PERF-02 | NFR-PERF-3 | `server/tests/integration/perf.dashboard.test.js` |
 | TC-PERF-03 | NFR-PERF-4 | `server/tests/integration/perf.search.test.js` |
 | TC-PERF-04 | NFR-PERF-5 | stretch - not yet |
