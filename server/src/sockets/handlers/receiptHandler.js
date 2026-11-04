@@ -3,21 +3,9 @@
 //   message:read {conversationId} or {messageId} - shown on screen in the open conversation (REQ-RCP-3)
 //   receipt:update {messageId, conversationId, status, userId} - pushed to the sender (REQ-RCP-4)
 const receiptService = require('../../services/receiptService');
-const { emitToUser } = require('../../utils/realtime');
 const logger = require('../../utils/logger');
 
-// REQ-RCP-4: every status change reaches the sender immediately (no refresh).
-function pushChanges(results, byUserId) {
-  for (const r of results) {
-    if (!r || !r.changed) continue;
-    emitToUser(r.message.senderId, 'receipt:update', {
-      messageId: String(r.message._id),
-      conversationId: String(r.message.conversationId),
-      status: r.message.status,
-      userId: byUserId,
-    });
-  }
-}
+const { pushChanges } = receiptService;
 
 function register(_io, socket) {
   const { userId } = socket.data;

@@ -240,7 +240,7 @@ Example:
 
 ### 3.5 receipt:update
 
-Sent to the original message sender when a recipient's delivery or read receipt changes the overall message status.
+Sent to the original message sender when a recipient's delivery or read receipt changes the overall message status. It is also sent when a group member leaves, is removed or deletes their account and every remaining member has read the message; `userId` is then the member who left (REQ-RCP-5).
 
 Example:
 

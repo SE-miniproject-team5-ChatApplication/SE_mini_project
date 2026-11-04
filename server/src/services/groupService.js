@@ -5,6 +5,13 @@ const { isValidId, assertId } = require('../utils/ids');
 const { joinConversation, leaveConversation, emitToUser } = require('../utils/realtime');
 const { assertMember } = require('./membershipService');
 const { createSystemMessage } = require('./messageService');
+const receiptService = require('./receiptService');
+
+// REQ-RCP-5: someone who had not read a message is no longer a member, so the
+// message may now be read by every current member.
+async function refreshReceipts(groupId, userId) {
+  receiptService.pushChanges(await receiptService.refreshConversation(groupId), String(userId));
+}
 
 async function nameOf(userId) {
   const user = await User.findById(userId).select('displayName');
@@ -112,6 +119,7 @@ async function removeMember(adminId, groupId, userId) {
   const removed = await Member.findOneAndDelete({ conversationId: groupId, userId });
   if (!removed) throw Errors.notFound('This user is not a member of the group');
   leaveConversation(userId, groupId); // stops real-time events at once (REQ-GRP-5)
+  await refreshReceipts(groupId, userId);
   const view = await notifyGroup(groupId, 'member_removed', [userId]);
   await createSystemMessage(groupId, `${await nameOf(adminId)} removed ${await nameOf(userId)}`); // REQ-GRP-6
   return view;
@@ -140,6 +148,7 @@ async function leaveGroup(userId, groupId) {
   if (!conversation || conversation.type !== 'group') throw Errors.notFound('Group not found');
   await Member.deleteOne({ _id: member._id });
   leaveConversation(userId, groupId);
+  await refreshReceipts(groupId, userId);
 
   let newAdminId = null;
   if (member.role === 'admin' && !(await Member.exists({ conversationId: groupId, role: 'admin' }))) {

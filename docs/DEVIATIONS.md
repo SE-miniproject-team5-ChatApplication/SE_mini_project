@@ -15,7 +15,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 | P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
-| P6 | PRC-4: no feature merges after 30 Oct | 16 pull requests were merged between 31 Oct and 2 Nov: #196-#199, #200-#203 and #205-#212 | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. |
+| P6 | PRC-4: no feature merges after 30 Oct | 18 pull requests were merged between 31 Oct and 4 Nov: #196-#199, #200-#203, #205-#213 and the REQ-RCP-5 pull request | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. REQ-RCP-5 was finished from the Stretch backlog before v1.0 was tagged. |
 
 ## Technology
 
@@ -43,7 +43,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 |---|---|---|---|
 | D1 | SRS 7: six collections | A seventh collection `revokedtokens` (auto-expiring) | REQ-AUTH-6 + REQ-AUTH-7: a logged-out token must stop working before its 24 h expiry. |
 | D2 | Appendix B.2: status includes "deleted" | Status `deleted` plus `deletedAt`; the original text stays in the database but is never returned | BR-4: "deletion does not remove the record for audit but hides its content". |
-| D3 | SAD 4.3 endpoint list | Added: `POST /api/conversations/direct`, `GET /api/groups/:id`, `GET /api/presence`, `GET /api/users/:id/avatar`, `DELETE /api/users/me`, `GET /api/health`. Changed: removing a member is `DELETE /api/groups/:id/members/:userId` (no request body). Not built: `GET /api/conversations/:id/export` (REQ-HIS-5) | Needed to start direct chats (BR-2), show group info (REQ-GRP-2), initial presence (REQ-PRS-1), show avatars, delete accounts (NFR-SEC-7) and check the server is up. Full list: `docs/API.md`. |
+| D3 | SAD 4.3 endpoint list | Added: `POST /api/conversations/direct`, `GET /api/groups/:id`, `GET /api/presence`, `GET /api/users/:id/avatar`, `DELETE /api/users/me`, `GET /api/health`, `GET /api/messages/:id/receipts`. Changed: removing a member is `DELETE /api/groups/:id/members/:userId` (no request body). Not built: `GET /api/conversations/:id/export` (REQ-HIS-5) | Needed to start direct chats (BR-2), show group info (REQ-GRP-2), initial presence (REQ-PRS-1), show avatars, delete accounts (NFR-SEC-7), check the server is up and show per-member receipts (REQ-RCP-5). Full list: `docs/API.md`. |
 | D4 | SAD 4.3.6: `message:ack` event | `message:ack` event **and** the Socket.IO acknowledgement callback; extra event `session:ready` | The callback lets the client match each ack to its message without extra bookkeeping. Full list: `docs/SOCKET_EVENTS.md`. |
 | D5 | SRS 7 / NFR-PERF-4: text index for search | The text index exists, but search uses a case-insensitive pattern match limited to the user's conversations | MongoDB text search only matches whole words; REQ-HIS-3 users expect "meet" to find "meeting". Tested within the 2 s limit on 10,000 messages (TC-PERF-03). |
 | D6 | SAD 4.3.6: `notification:unread` event | Event not implemented. Unread counts come from `GET /api/conversations`; a count is reset by the `message:read` event | The client already refreshes the conversation list, so no separate event was needed. |
@@ -54,7 +54,6 @@ These were moved to the Stretch backlog and were not finished by the end of Spri
 
 | Requirement | Issue | State | Test case |
 |---|---|---|---|
-| REQ-RCP-5 group read receipts | #37 | Partial: the group read rule works on the server; the sender cannot view per-member status | TC-RCP-02 (rule only) |
 | REQ-HIS-5 CSV export | #52 | Not built | TC-HIS-03 not run |
 | REQ-NOT-4 mute a conversation | #61 | Partial: the server API works and the client respects a muted conversation, but the UI has no mute control | TC-NOT-02 not run |
 | NFR-PERF-1 latency at 100 users | #62 | Not measured | TC-PERF-01 not run |
@@ -77,3 +76,4 @@ These were moved to the Stretch backlog and were not finished by the end of Spri
 | B5 | In `NODE_ENV=development`, requests from the same machine are not rate-limited, because all local browsers share one IP behind the dev proxy. Production and tests use the SRS limits (NFR-SEC-6). |
 | B6 | When an account is deleted, messages it already sent stay in the other participants' history as "Deleted user" (NFR-SEC-7, BR-4). |
 | B7 | Logging out ends only that session (that tab/device); other sessions of the same user stay logged in. |
+| B8 | A group message counts as read when every current member has read it, and it is checked again when a member leaves, is removed or deletes their account. A member who joins later does not turn a read message back to unread, because a status only moves forward (REQ-RCP-1); messages not yet read by everyone also wait for the new member. |

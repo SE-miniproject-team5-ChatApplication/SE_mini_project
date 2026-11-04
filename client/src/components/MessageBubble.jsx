@@ -1,12 +1,16 @@
+import { useState } from 'react';
 import { formatTime } from '../utils/format.js';
 import { useChat } from '../context/ChatContext.jsx';
 import MessageStatus from './MessageStatus.jsx';
 import AttachmentView from './AttachmentView.jsx';
+import ReceiptInfoDialog from './ReceiptInfoDialog.jsx';
 
 // One message. Text is rendered as a React text node, so any HTML or <script>
 // inside a message is shown as plain characters and never executed (NFR-SAFE-2).
 export default function MessageBubble({ message, mine, senderName }) {
-  const { deleteMessage } = useChat();
+  const { deleteMessage, activeConversation } = useChat();
+  const [showInfo, setShowInfo] = useState(false);
+  const canShowInfo = mine && message.id && activeConversation?.type === 'group' && message.status !== 'deleted';
   const deleted = message.status === 'deleted';
 
   // SAD 4.5: confirm before deleting a message.
@@ -30,6 +34,11 @@ export default function MessageBubble({ message, mine, senderName }) {
           <span>{formatTime(message.sentAt)}</span>
           {mine && !deleted && <MessageStatus status={message.status} />}
           {message.status === 'failed' && <span className="field-error" title={message.error}>Not sent</span>}
+          {canShowInfo && (
+            <button type="button" className="link-btn" onClick={() => setShowInfo(true)}>
+              Info
+            </button>
+          )}
           {mine && !deleted && message.id && (
             <button type="button" className="link-btn" onClick={onDelete} aria-label="Delete message">
               Delete
@@ -37,6 +46,7 @@ export default function MessageBubble({ message, mine, senderName }) {
           )}
         </div>
       </div>
+      {showInfo && <ReceiptInfoDialog messageId={message.id} onClose={() => setShowInfo(false)} />}
     </div>
   );
 }
