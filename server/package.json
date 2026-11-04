@@ -12,6 +12,7 @@
     "test:ci": "jest --coverage --runInBand",
     "backup": "node scripts/backup.js",
     "restore": "node scripts/restore.js",
+    "perf:latency": "node scripts/perf/latency.js",
     "trace": "node scripts/check-traceability.js"
   },
   "engines": {

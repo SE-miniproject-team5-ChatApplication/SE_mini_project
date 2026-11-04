@@ -32,13 +32,13 @@ Every automated test title starts with its TC id, so `npx jest -t TC-MSG-01` run
 | TC-RCP-02 | REQ-RCP-5 | `server/tests/integration/receipts.group.test.js`<br>`server/tests/unit/receiptService.test.js` |
 | TC-HIS-01 | REQ-HIS-1, REQ-HIS-2 | `server/tests/integration/history.list.test.js`<br>`server/tests/integration/history.paging.test.js` |
 | TC-HIS-02 | REQ-HIS-3, REQ-HIS-4 | `server/tests/integration/history.isolation.test.js`<br>`server/tests/integration/search.test.js` |
-| TC-HIS-03 | REQ-HIS-5 | stretch - not yet |
+| TC-HIS-03 | REQ-HIS-5 | `server/tests/integration/history.export.test.js` |
 | TC-FIL-01 | REQ-FIL-1, REQ-FIL-3, REQ-FIL-5 | `server/tests/integration/files.upload.test.js`<br>`server/tests/unit/fileStorage.test.js` |
 | TC-FIL-02 | REQ-FIL-1, REQ-FIL-2 | `server/tests/integration/files.upload.test.js` |
 | TC-FIL-03 | REQ-FIL-4, NFR-SAFE-3 | `server/tests/integration/files.download.test.js` |
 | TC-NOT-01 | REQ-NOT-1..3 | `server/tests/integration/notifications.unread.test.js` |
 | TC-NOT-02 | REQ-NOT-4 | stretch - not yet |
-| TC-PERF-01 | NFR-PERF-1, NFR-PERF-2 | stretch - not yet |
+| TC-PERF-01 | NFR-PERF-1, NFR-PERF-2 | `server/scripts/perf/latency.js`<br>`docs/testing/PERFORMANCE.md` |
 | TC-PERF-02 | NFR-PERF-3 | `server/tests/integration/perf.dashboard.test.js` |
 | TC-PERF-03 | NFR-PERF-4 | `server/tests/integration/perf.search.test.js` |
 | TC-PERF-04 | NFR-PERF-5 | stretch - not yet |
