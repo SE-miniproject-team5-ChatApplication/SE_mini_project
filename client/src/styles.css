@@ -190,3 +190,7 @@ mark { background: #ffe58a; color: inherit; padding: 0 1px; }
   border-radius: 6px;
   margin: 6px 0;
 }
+
+/* REQ-RCP-5: per-member receipts */
+.receipt-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.receipt-table th, .receipt-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }

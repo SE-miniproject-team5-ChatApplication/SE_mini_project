@@ -29,7 +29,7 @@ Every automated test title starts with its TC id, so `npx jest -t TC-MSG-01` run
 | TC-GRP-04 | REQ-GRP-4, REQ-GRP-6 | `server/tests/integration/groups.leave.test.js`<br>`server/tests/integration/groups.system.test.js` |
 | TC-GRP-05 | REQ-GRP-5, NFR-SEC-4 | `server/tests/integration/groups.access.test.js`<br>`server/tests/integration/membership.test.js` |
 | TC-RCP-01 | REQ-RCP-1..4 | `server/tests/integration/receipts.test.js`<br>`server/tests/unit/receiptService.test.js` |
-| TC-RCP-02 | REQ-RCP-5 | `server/tests/unit/receiptService.test.js` |
+| TC-RCP-02 | REQ-RCP-5 | `server/tests/integration/receipts.group.test.js`<br>`server/tests/unit/receiptService.test.js` |
 | TC-HIS-01 | REQ-HIS-1, REQ-HIS-2 | `server/tests/integration/history.list.test.js`<br>`server/tests/integration/history.paging.test.js` |
 | TC-HIS-02 | REQ-HIS-3, REQ-HIS-4 | `server/tests/integration/history.isolation.test.js`<br>`server/tests/integration/search.test.js` |
 | TC-HIS-03 | REQ-HIS-5 | stretch - not yet |

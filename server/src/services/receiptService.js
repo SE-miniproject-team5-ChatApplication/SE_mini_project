@@ -3,8 +3,10 @@
 // Owns message delivery/read receipts and message status transitions.
 // Unread-count operations are delegated to the DD-NOT Notification Service.
 
-const { Message } = require('../models');
+const { Message, User } = require('../models');
+const { Errors } = require('../utils/errors');
 const { isValidId } = require('../utils/ids');
+const { emitToUser } = require('../utils/realtime');
 const { isMember, memberUserIds } = require('./membershipService');
 const notificationService = require('./notificationService');
 
@@ -30,11 +32,9 @@ function computeStatus({ current, recipientIds, deliveredTo = [], readBy = [] })
   return canAdvance(current, next) ? next : current;
 }
 
-// Recomputes the overall status after a receipt was added and saves it only
+// Recomputes the overall status from the current members and saves it only
 // if it moves forward. Returns { message, changed }.
-async function refreshStatus(messageId) {
-  const message = await Message.findById(messageId);
-  const members = await memberUserIds(message.conversationId);
+async function saveStatus(message, members) {
   const recipientIds = members.filter((id) => id !== String(message.senderId));
 
   const next = computeStatus({
@@ -54,6 +54,42 @@ async function refreshStatus(messageId) {
 
   message.status = next;
   return { message, changed: res.modifiedCount === 1 };
+}
+
+// After a receipt was added.
+async function refreshStatus(messageId) {
+  const message = await Message.findById(messageId);
+  return saveStatus(message, await memberUserIds(message.conversationId));
+}
+
+// REQ-RCP-5: "all current members" changes when someone leaves or is removed,
+// so the messages that are not yet read are checked again. Returns the changes.
+async function refreshConversation(conversationId) {
+  const members = await memberUserIds(conversationId);
+  const pending = await Message.find({
+    conversationId,
+    type: { $ne: 'system' },
+    status: { $in: ['sent', 'delivered'] },
+  })
+    .sort({ sentAt: -1 })
+    .limit(500);
+
+  const results = [];
+  for (const message of pending) results.push(await saveStatus(message, members));
+  return results.filter((r) => r.changed);
+}
+
+// REQ-RCP-4: every status change reaches the sender immediately (no refresh).
+function pushChanges(results, byUserId) {
+  for (const r of results) {
+    if (!r || !r.changed) continue;
+    emitToUser(r.message.senderId, 'receipt:update', {
+      messageId: String(r.message._id),
+      conversationId: String(r.message.conversationId),
+      status: r.message.status,
+      userId: byUserId,
+    });
+  }
 }
 
 // Adds userId to message[field] once. Only conversation members who are not
@@ -119,6 +155,35 @@ async function markRead(userId, { messageId, conversationId } = {}) {
   return results;
 }
 
+// REQ-RCP-5: the sender can see the status for each current member.
+async function receiptsFor(userId, messageId) {
+  if (!isValidId(messageId)) throw Errors.validation('Invalid messageId', 'messageId');
+  const message = await Message.findById(messageId);
+  if (!message) throw Errors.notFound('Message not found');
+  if (String(message.senderId) !== String(userId)) throw Errors.forbidden('Only the sender can see receipts');
+
+  const memberIds = (await memberUserIds(message.conversationId)).filter((id) => id !== String(userId));
+  const users = await User.find({ _id: { $in: memberIds } }).select('displayName');
+  const nameOf = new Map(users.map((u) => [String(u._id), u.displayName]));
+  const at = (list, id) => (list.find((r) => String(r.userId) === id) || {}).at || null;
+
+  return {
+    messageId: String(message._id),
+    status: message.status,
+    members: memberIds.map((id) => {
+      const readAt = at(message.readBy, id);
+      const deliveredAt = at(message.deliveredTo, id) || readAt;
+      return {
+        userId: id,
+        displayName: nameOf.get(id) || 'Unknown',
+        deliveredAt,
+        readAt,
+        status: readAt ? 'read' : deliveredAt ? 'delivered' : 'sent',
+      };
+    }),
+  };
+}
+
 module.exports = {
   STATUS_RANK,
   canAdvance,
@@ -127,4 +192,7 @@ module.exports = {
   markRead,
   addReceipt,
   refreshStatus,
+  refreshConversation,
+  pushChanges,
+  receiptsFor,
 };

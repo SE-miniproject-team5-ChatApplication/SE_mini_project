@@ -76,6 +76,7 @@ All conversation endpoints require authentication.
 | GET | `/conversations` | None | `200` - Conversation list | REQ-HIS-1, REQ-NOT-1 |
 | GET | `/conversations/:id/messages` | `before`, optional `limit` | `200` - Paginated messages | REQ-HIS-2, REQ-HIS-4 |
 | PUT | `/conversations/:id/mute` | `{muted: true}` or `{muted: false}` | `204 No Content` | REQ-NOT-4 |
+| GET | `/messages/:id/receipts` | Message ID in URL | `200` - Delivery and read status of each current member (sender only, others get `403`) | REQ-RCP-5 |
 
 ### Direct conversation
 
