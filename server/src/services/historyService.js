@@ -2,7 +2,7 @@
 // History Service (DD-HIS / component C9).
 // Module owner: Raksha Arun (SRS Appendix C).
 // Responsibility: conversation listing, paginated message history,
-// keyword search, and conversation-history support.
+// keyword search, and conversation-history export.
 // Route handlers delegate all history business logic to this service.
 
 const { Member, Conversation, User, Message } = require('../models');
@@ -13,6 +13,7 @@ const { assertMember, conversationIdsOf } = require('./membershipService');
 const { escapeRegex } = require('./userService');
 
 const PAGE_SIZE = 50;
+const EXPORT_LIMIT = 50000;
 
 // REQ-HIS-1: the user's conversations, most recent activity first, each with
 // the last message preview and time.
@@ -120,4 +121,107 @@ async function search(userId, { q, conversationId } = {}) {
   }));
 }
 
-module.exports = { listConversations, getMessages, search, snippetOf, PAGE_SIZE };
+// Escape a value for CSV. Formula-like cells are prefixed with an apostrophe
+// to prevent spreadsheet applications from executing them as formulas.
+function csvCell(value) {
+  let text = value === null || value === undefined ? '' : String(value);
+
+  if (/^[=+\-@\t\r]/.test(text)) {
+    text = `'${text}`;
+  }
+
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+// REQ-HIS-5: export a conversation's complete available history as a CSV
+// Chat History Report. Only conversation members may use this function.
+async function exportCsv(user, conversationId) {
+  await assertMember(user._id, conversationId);
+
+  const conversations = await listConversations(user._id);
+  const conversation = conversations.find(
+    (item) => item.id === String(conversationId)
+  );
+
+  if (!conversation) {
+    throw Errors.notFound('Conversation not found');
+  }
+
+  const messages = await Message.find({ conversationId })
+    .sort({ sentAt: 1, _id: 1 })
+    .limit(EXPORT_LIMIT)
+    .populate('attachmentId');
+
+  const senderIds = [
+    ...new Set(
+      messages
+        .filter((message) => message.senderId)
+        .map((message) => String(message.senderId))
+    ),
+  ];
+
+  const senders = await User.find({ _id: { $in: senderIds } })
+    .select('displayName')
+    .lean();
+
+  const senderNames = new Map(
+    senders.map((sender) => [String(sender._id), sender.displayName])
+  );
+
+  const exportedAt = new Date().toISOString();
+  const exportedBy = user.displayName || user.username || '';
+
+  const header = [
+    'Conversation Name',
+    'Sender Name',
+    'Message Content',
+    'Sent At',
+    'Status',
+    'Attachment File Name',
+    'Exported By',
+    'Export Date',
+  ];
+
+  const rows = messages.map((message) => {
+    const deleted = message.status === 'deleted';
+    const attachment = message.attachmentId;
+
+    return [
+      conversation.name,
+      message.type === 'system'
+        ? 'System'
+        : senderNames.get(String(message.senderId)) || 'Deleted user',
+      deleted ? 'This message was deleted' : message.content,
+      message.sentAt ? new Date(message.sentAt).toISOString() : '',
+      message.status,
+      !deleted && attachment && attachment.fileName
+        ? attachment.fileName
+        : '',
+      exportedBy,
+      exportedAt,
+    ];
+  });
+
+  const lines = [header, ...rows].map((row) =>
+    row.map(csvCell).join(',')
+  );
+
+  const safeName = (conversation.name || 'conversation')
+    .replace(/[^A-Za-z0-9_-]+/g, '_');
+
+  return {
+    fileName: `chat-${safeName}.csv`,
+    csv: `\uFEFF${lines.join('\r\n')}\r\n`,
+  };
+}
+
+module.exports = {
+  listConversations,
+  getMessages,
+  search,
+  snippetOf,
+  csvCell,
+  exportCsv,
+  PAGE_SIZE,
+  EXPORT_LIMIT,
+};

@@ -1,7 +1,7 @@
 
-// History Routes (DD-HIS).
+// History Routes (DD-HIS / component C9).
 // Module owner: Raksha Arun (SRS Appendix C).
-// Handles conversation listing and paginated message-history requests.
+// Handles conversation listing, paginated message history and CSV exports.
 // Business logic is delegated to historyService.js.
 
 const express = require('express');
@@ -34,6 +34,29 @@ router.get(
         limit: req.query.limit,
       })
     );
+  })
+);
+
+// GET /api/conversations/:id/export
+// REQ-HIS-5: export conversation history as a CSV report.
+// Only authenticated conversation members may export the history.
+router.get(
+  '/:id/export',
+  requireMembership('id'),
+  asyncHandler(async (req, res) => {
+    const { fileName, csv } = await historyService.exportCsv(
+      req.user,
+      req.params.id
+    );
+
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    });
+
+    res.send(csv);
   })
 );
 
