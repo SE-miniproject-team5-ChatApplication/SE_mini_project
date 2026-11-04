@@ -1,17 +1,25 @@
-
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useChat } from '../context/ChatContext.jsx';
+import { useConversations } from '../context/ConversationsContext.jsx';
 import PresenceText from './PresenceText.jsx';
 import TypingIndicator from './TypingIndicator.jsx';
 import GroupInfoDialog from './GroupInfoDialog.jsx';
+import MuteButton from './MuteButton.jsx';
 import { http, apiError } from '../api/http.js';
 import { downloadFile } from '../utils/download.js';
 
 export default function ChatHeader({ conversation }) {
-  const { closeConversation } = useChat();
+  const { closeConversation, openConversation } = useChat();
+  const { refresh } = useConversations();
   const [showInfo, setShowInfo] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const isGroup = conversation.type === 'group';
+
+  // REQ-NOT-4: update the active conversation after muting or unmuting.
+  const handleMutedChange = (muted) => {
+    openConversation({ ...conversation, muted });
+    refresh().catch(() => {});
+  };
 
   // REQ-HIS-5: export this conversation's history as a CSV report.
   const exportHistory = async () => {
@@ -51,7 +59,7 @@ export default function ChatHeader({ conversation }) {
         onClick={closeConversation}
         aria-label="Back to chats"
       >
-        ←
+        {'\u2190'}
       </button>
 
       <div className="chat-header-title">
@@ -63,6 +71,11 @@ export default function ChatHeader({ conversation }) {
           )}
         </div>
       </div>
+
+      <MuteButton
+        conversation={conversation}
+        onMutedChange={handleMutedChange}
+      />
 
       <button
         type="button"
