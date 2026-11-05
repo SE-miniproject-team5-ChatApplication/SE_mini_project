@@ -1,7 +1,8 @@
-# Performance load tests (NFR-PERF-1, NFR-PERF-2, TC-PERF-01)
+# Performance load tests (NFR-PERF-1, NFR-PERF-2, NFR-PERF-5; TC-PERF-01, TC-PERF-04)
 
 - NFR-PERF-1: with 100 concurrent users, 95 % of messages reach the online recipient within 500 ms.
 - NFR-PERF-2: the server supports at least 200 simultaneous WebSocket connections without message loss.
+- NFR-PERF-5: a message to a group with 50 online members reaches all of them within 1 second.
 
 ## Message latency (NFR-PERF-1)
 
@@ -67,3 +68,20 @@ Results (4 Nov 2026, same laptop, freshly started server):
 
 At 300 and 400 connections every message was still stored and delivered; only some
 acknowledgements were late, because 300-400 messages arrive in the same instant.
+
+## Group fan-out (NFR-PERF-5, TC-PERF-04)
+
+Run: `npm run perf:fanout --prefix server` (options `--members 50`, `--messages 10`).
+
+The script puts 50 online users in one group. One member sends 10 messages, half a second
+apart, and the time is measured until the last of the other 49 members has each message. A
+message that has not reached everyone within 5 s, or that the server rejects, counts as a
+failure.
+
+Results (5 Nov 2026, same laptop, freshly started server):
+
+| Members | Messages | Reached everyone | p50 | p95 | Result |
+|---|---|---|---|---|---|
+| 50 | 10 | 10 | 23 ms | 67 ms | Pass |
+| 50 (repeated) | 10 | 10 | 23 ms | 37 ms | Pass |
+| 200 | 10 | 10 | 82 ms | 117 ms | Pass |

@@ -10,10 +10,11 @@
 - Confirmed that `server/scripts/backup.js` writes backup files using Mongoose rather than calling `mongodump`.
 - Verified Windows server unit tests (42/42 passed) and the Windows client production build. macOS CI and manual browser checks remain pending.
 
-### Stretch items completed (3-4 Nov 2026)
+### Stretch items completed (3-5 Nov 2026)
 - Group read receipts: read only when every current member has read it; the sender can see each member's status.
 - Message latency load test: with 100 users, 95 % of messages arrive within 40 ms (`npm run perf:latency`).
 - Capacity load test: 200 simultaneous connections, every message stored and delivered (`npm run perf:capacity`).
+- Group fan-out load test: a message to a 50-member group reaches everyone within 70 ms for 95 % of messages (`npm run perf:fanout`).
 
 ### Sprint 2 (26 Oct - 2 Nov 2026)
 - Account lock-out; profile page with display name, status, avatar, password change and account deletion.

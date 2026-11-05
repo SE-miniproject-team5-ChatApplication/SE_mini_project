@@ -61,7 +61,7 @@ The automated tests cover the server, so these client-visible defects passed CI.
 | History and search | TC-HIS-01..03 | TC-HIS-01, -02 pass; TC-HIS-03 not run in the historical baseline | Historical baseline |
 | Files | TC-FIL-01..03 | Pass | Automated |
 | Notifications | TC-NOT-01..02 | TC-NOT-01 pass; TC-NOT-02 not run in the historical baseline | Historical baseline |
-| Performance | TC-PERF-01..04 | TC-PERF-01, -02, -03 pass; TC-PERF-04 not run | Latency p95 28-38 ms with 100 users; 200 connections with every message stored and delivered (`docs/testing/PERFORMANCE.md`). Fan-out not run |
+| Performance | TC-PERF-01..04 | Pass | Latency p95 28-38 ms with 100 users; 200 connections with every message stored and delivered; 50-member group fan-out p95 37-67 ms (`docs/testing/PERFORMANCE.md`) |
 | Security | TC-SEC-01..03 | TC-SEC-01, -02 pass; TC-SEC-03 partial | Only the configuration checks are automated; TLS is not built and ZAP/testssl were not run |
 | Safety | TC-SAFE-01 | Pass | Automated |
 | Usability | TC-USAB-01 | Not run in the historical baseline | See `docs/testing/USABILITY_TEST.md` |
@@ -71,7 +71,7 @@ The automated tests cover the server, so these client-visible defects passed CI.
 
 The following figures refer to the historical full-suite baseline:
 
-- [ ] 100 % of planned test cases executed (not met: 39 of 42 implemented)
+- [ ] 100 % of planned test cases executed (not met: 41 of 42 implemented; TC-NOT-02 has no test, and the TC-USAB-01 procedure has not been carried out)
 - [ ] All High-priority cases passed (not met: TC-SEC-03 partial)
 - [x] 0 critical or high defects open
 - [x] Coverage >= 70 %
