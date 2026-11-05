@@ -45,8 +45,9 @@ freshly started server for each set of runs.
   users, but it shows the server handles roughly 45 messages arriving in the same instant.
 - **A server that had been running for a long time:** one test server that had already been
   through several overloaded runs gave p95 = 1.6 s at one message per user per second, where a
-  fresh server gave 23-36 ms. Its memory use was normal (50 MB). The cause was not found; a
-  longer test is part of NFR-QA-3 (availability).
+  fresh server gave 23-36 ms. Its memory use was normal (50 MB). The cause was not found. In the
+  60-minute availability run (`docs/OPERATIONS.md`) p95 also rose, from about 20 ms to 157-329 ms
+  after 35 minutes.
 
 ## Capacity (NFR-PERF-2)
 
