@@ -194,3 +194,13 @@ mark { background: #ffe58a; color: inherit; padding: 0 1px; }
 /* REQ-RCP-5: per-member receipts */
 .receipt-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .receipt-table th, .receipt-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+
+
+/* NFR-QA-1: header buttons wrap on narrow screens instead of overflowing */
+.chat-header {
+  flex-wrap: wrap;
+}
+
+.chat-header .btn {
+  white-space: nowrap;
+}
