@@ -11,6 +11,9 @@ dist/
 coverage/
 *.log
 
+# TLS keys (NFR-SEC-3)
+server/certs/
+
 # runtime data
 server/uploads/
 backups/
@@ -20,4 +23,3 @@ backups/
 Thumbs.db
 .vscode/
 .idea/
-server/backups/
