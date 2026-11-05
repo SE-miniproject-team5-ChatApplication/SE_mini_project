@@ -41,9 +41,9 @@ Every automated test title starts with its TC id, so `npx jest -t TC-MSG-01` run
 | TC-PERF-01 | NFR-PERF-1, NFR-PERF-2 | `server/scripts/perf/capacity.js`<br>`server/scripts/perf/latency.js`<br>`docs/testing/PERFORMANCE.md` |
 | TC-PERF-02 | NFR-PERF-3 | `server/tests/integration/perf.dashboard.test.js` |
 | TC-PERF-03 | NFR-PERF-4 | `server/tests/integration/perf.search.test.js` |
-| TC-PERF-04 | NFR-PERF-5 | stretch - not yet |
+| TC-PERF-04 | NFR-PERF-5 | `server/scripts/perf/group-fanout.js`<br>`docs/testing/PERFORMANCE.md` |
 | TC-SEC-01 | NFR-SAFE-2, NFR-SEC-5 | `server/tests/integration/xss.test.js`<br>`server/tests/unit/sanitize.test.js` |
 | TC-SEC-02 | NFR-SEC-6 | `server/tests/integration/rateLimit.test.js`<br>`server/tests/unit/rateLimit.test.js` |
 | TC-SEC-03 | NFR-SEC-2, NFR-SEC-3, NFR-SEC-7 | `server/tests/unit/config.test.js` |
 | TC-SAFE-01 | NFR-SAFE-1, NFR-SAFE-4 | `server/tests/integration/messages.persist.test.js` |
-| TC-USAB-01 | NFR-QA-1 | stretch - not yet |
+| TC-USAB-01 | NFR-QA-1 | `docs/testing/USABILITY_TEST.md` |
