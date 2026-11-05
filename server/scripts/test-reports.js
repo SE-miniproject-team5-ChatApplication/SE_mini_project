@@ -66,7 +66,7 @@ const PLAN = {
 const NOT_AUTOMATED = {
   'TC-PERF-01': ['Pass', 'Load scripts `perf:latency` and `perf:capacity`: p95 28-38 ms with 100 users; 200 connections, every message stored and delivered (`docs/testing/PERFORMANCE.md`)'],
   'TC-PERF-04': ['Pass', 'Load script `perf:fanout`: p95 37-67 ms with 50 members (`docs/testing/PERFORMANCE.md`)'],
-  'TC-USAB-01': ['Not run', 'Procedure written (`docs/testing/USABILITY_TEST.md`); no results recorded'],
+  'TC-USAB-01': ['Partial', '2-click check: every primary action takes 1 click from the dashboard (9 / 9, Chrome 156). Timed test with five first-time users not run (`docs/testing/USABILITY_TEST.md`)'],
   'TC-SEC-03': ['Pass', 'Configuration tests, `npm run tls:check` against a server with a certificate (14 / 14), git-history secret search and the stored user fields (`docs/testing/SECURITY_TEST.md`)'],
 };
 
@@ -205,7 +205,7 @@ function systemReport(results) {
     '| NFR-QA-2 no acknowledged message lost | `reliability.test.js`, `messages.resend.test.js`, and the 60-second network drop (TC-MSG-05, `docs/testing/RELIABILITY.md`) | Pass |',
     '| NFR-QA-3 availability | `npm run monitor` for 60 minutes under load | Pass: 99.67 % (`docs/OPERATIONS.md`) |',
     '| NFR-QA-5 coverage and traceability | `npm run test:ci`, `npm run trace` in CI | Pass (`CODE_COVERAGE_REPORT.md`) |',
-    '| NFR-QA-6 portability | CI `portability` job on Windows and macOS; Chrome and Firefox browser checks | Partial: Edge only partly checked (`docs/testing/PORTABILITY.md`) |',
+    '| NFR-QA-6 portability | CI `portability` job on Windows and macOS; Chrome, Firefox and Edge browser checks (11 / 11 each) | Pass (`docs/testing/PORTABILITY.md`) |',
     '| NFR-QA-7 stateless handlers | `stateless.test.js` | Pass (`docs/SCALABILITY.md`) |',
     '',
     'The load and availability figures are the recorded results of runs on 4-5 Nov 2026; this',

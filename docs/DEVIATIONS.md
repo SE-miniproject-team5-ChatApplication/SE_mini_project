@@ -9,7 +9,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 | # | Document says | What we did | Why |
 |---|---|---|---|
 | P1 | SAD 4.6: four sprints (skeleton+auth; messaging, presence, groups; receipts, history, files, notifications; hardening) | A dry-run week (12-16 Oct), Sprint 1 (19-23 Oct), Sprint 2 (26 Oct - 2 Nov) and Sprint 3 (3-6 Nov) for the Stretch list | The Part-2 brief fixed two sprints, and Part 3 allows an optional Sprint 3 for spill-over. Items were re-planned in the GitHub Project (backlog "Sprint" field). |
-| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency, capacity and group fan-out were measured with load scripts (`docs/testing/PERFORMANCE.md`); the usability test was not run (see "Requirements not fully met"). |
+| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency, capacity and group fan-out were measured with load scripts (`docs/testing/PERFORMANCE.md`); only the click-count part of the usability test was run (see "Requirements not fully met"). |
 | P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`); message latency, capacity and group fan-out are Node load scripts (`server/scripts/perf/`); TLS is checked with `npm run tls:check` and the repository with a git-history search instead of testssl.sh, ZAP and gitleaks (`docs/testing/SECURITY_TEST.md`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
@@ -57,8 +57,7 @@ fully carried out.
 
 | Requirement | Issue | State | Test case |
 |---|---|---|---|
-| NFR-QA-1 first message within 3 min | #78 | Test procedure written (`docs/testing/USABILITY_TEST.md`) | TC-USAB-01 not carried out: no results recorded |
-| NFR-QA-6 portability | #83 | CI runs the server unit tests and the client build on Windows and macOS (both pass); Chrome and Firefox pass in the browser | Edge only partly checked; TC-SAFE-02 fails on Windows (T8) |
+| NFR-QA-1 first message within 3 min | #78 | Test procedure written; every primary action takes 1 click (`docs/testing/USABILITY_TEST.md`) | TC-USAB-01 partly carried out: the timed test with five first-time users has not been run |
 
 ## Behaviour the SRS did not specify, or that differs from it (our decisions)
 
