@@ -59,26 +59,26 @@ The automated tests cover the server, so these client-visible defects passed CI.
 |---|---|---|---|
 | Authentication | TC-AUTH-01..06 | Pass | Automated |
 | Profile and contacts | TC-PRO-01..03 | Pass | Automated |
-| Messaging | TC-MSG-01..06 | Pass | Automated; the manual network drop in `docs/testing/RELIABILITY.md` is not recorded |
+| Messaging | TC-MSG-01..06 | Pass | Automated; the 60-second network drop also passes in the browser, 8 / 8 (`docs/testing/RELIABILITY.md`) |
 | Presence and typing | TC-PRS-01..03 | Pass | Automated |
 | Groups | TC-GRP-01..05 | Pass | Automated |
 | Receipts | TC-RCP-01..02 | Pass | Automated |
 | History and search | TC-HIS-01..03 | Pass | Automated, including the CSV export (TC-HIS-03) |
 | Files | TC-FIL-01..03 | Pass | Automated |
-| Notifications | TC-NOT-01..02 | Pass | Automated; muting also checked in Chrome and Firefox (no notification, unread badge still counts) |
+| Notifications | TC-NOT-01..02 | Pass | Automated; muting also checked in Chrome, Firefox and Edge (no notification, unread badge still counts) |
 | Performance | TC-PERF-01..04 | Pass | Latency p95 28-38 ms with 100 users; 200 connections with every message stored and delivered; 50-member group fan-out p95 37-67 ms (`docs/testing/PERFORMANCE.md`) |
 | Scalability | NFR-QA-7 (no Test Plan case) | Pass | Guard test server/tests/unit/stateless.test.js; limits in docs/SCALABILITY.md |
 | Security | TC-SEC-01..03 | Pass | TC-SEC-03: `npm run tls:check` 14 / 14 with a certificate, git-history secret search, stored user fields (`docs/testing/SECURITY_TEST.md`) |
 | Safety | TC-SAFE-01 | Pass | Automated |
 | Availability | NFR-QA-3 (no Test Plan case) | Pass | 99.67 % over 60 minutes under load; the server restarted in 1 s after it was stopped (`docs/OPERATIONS.md`) |
-| Usability | TC-USAB-01 | Not run | The procedure is written (`docs/testing/USABILITY_TEST.md`); no results recorded |
-| Portability | NFR-QA-6 | Partial | Unit tests and client build pass on Windows and macOS; Chrome and Firefox pass; Edge only partly checked (`docs/testing/PORTABILITY.md`) |
+| Usability | TC-USAB-01 | Partial | Every primary action takes 1 click from the dashboard (9 / 9); the timed test with five first-time users has not been run (`docs/testing/USABILITY_TEST.md`) |
+| Portability | NFR-QA-6 | Pass | Unit tests and client build pass on Windows and macOS; Chrome, Firefox and Edge pass 11 / 11 each (`docs/testing/PORTABILITY.md`) |
 
 ## Exit Criteria (Test Plan section 5)
 
 For the v1.0 release:
 
-- [ ] 100 % of planned test cases executed (not met: 41 of 42 executed; the TC-USAB-01 procedure needs five first-time users and has not been carried out)
+- [ ] 100 % of planned test cases executed (not met: 41 of 42 fully executed; only the click-count part of TC-USAB-01 has been run, the timed test needs five first-time users)
 - [x] All High-priority cases passed
 - [x] 0 critical or high defects open
 - [x] Coverage >= 70 %

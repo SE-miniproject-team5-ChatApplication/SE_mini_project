@@ -17,7 +17,8 @@ Tagged `v1.0`. Only defect fixes after this, on a `hotfix/` branch.
 - Export a conversation as a CSV file (Chat History Report).
 - Mute a conversation: no notifications, unread messages still counted.
 - HTTPS and WSS with TLS 1.2 or newer when a certificate is configured (`docs/TLS.md`).
-- Usability test procedure for the first-message task (`docs/testing/USABILITY_TEST.md`).
+- Usability test procedure for the first-message task (`docs/testing/USABILITY_TEST.md`); every primary action measured at 1 click.
+- Chrome, Firefox and Edge each pass the same 11 browser checks (`docs/testing/PORTABILITY.md`).
 - Message latency load test: with 100 users, 95 % of messages arrive within 40 ms (`npm run perf:latency`).
 - Capacity load test: 200 simultaneous connections, every message stored and delivered (`npm run perf:capacity`).
 - Group fan-out load test: a message to a 50-member group reaches everyone within 70 ms for 95 % of messages (`npm run perf:fanout`).

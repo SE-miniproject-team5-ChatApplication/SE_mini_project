@@ -57,6 +57,28 @@ Measure these actions from the dashboard.
 | Search messages | 1 | Type in "Search messages" |
 | Profile / logout | 1 | Select the buttons at the top of the sidebar |
 
+## Results: primary actions (criterion 2)
+
+Measured on 5 November 2026 in Chrome 156 with a newly registered account. A script clicked through each
+action from the dashboard and counted the real mouse clicks; typing and pressing Enter are not clicks.
+
+| Action | Clicks measured | Result |
+|---|---:|---|
+| Find a person | 1 | Pass |
+| Add contact | 1 | Pass |
+| Start a chat | 1 | Pass |
+| Send a message | 1 (click the message box, type, Enter) | Pass |
+| Attach a file | 1 (file picker opens) | Pass |
+| Create a new group | 1 (dialog opens) | Pass |
+| Search messages | 1 | Pass |
+| Profile | 1 | Pass |
+| Logout | 1 | Pass |
+
+**Criterion 2 passes: no primary action needs more than 1 click.**
+
+Criteria 1 and 3 (time to first message, no help) need five people who have never used the
+application. That part has not been carried out yet, so TC-USAB-01 is recorded as Partial.
+
 ## Test Results
 
 Record the results for all five testers.
