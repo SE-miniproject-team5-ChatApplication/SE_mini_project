@@ -11,7 +11,12 @@ describeDb('NFR-SAFE-1 daily backup', () => {
   let outDir;
   const db = () => mongoose.connection.db;
 
-  beforeAll(connectTestDb);
+  // Start from an empty database: the counts below must not include data written
+  // late by a test file that ran earlier in the same Jest worker.
+  beforeAll(async () => {
+    await connectTestDb();
+    await clearTestDb();
+  });
   beforeEach(() => {
     outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chat-backup-'));
   });

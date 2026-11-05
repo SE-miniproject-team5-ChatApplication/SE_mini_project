@@ -38,7 +38,7 @@ Manual testing was performed on 5 November 2026.
 | Operating System | Server Tests | Client Build |
 |---|---|---|
 | Ubuntu (Linux) | Full server test suite, lint and traceability | Yes |
-| Windows | Unit tests: 42/42 passed locally | Production build passed locally |
+| Windows | Unit tests: 52/52 passed locally (16 suites) | Production build passed locally |
 | macOS | Unit tests pass in CI (`portability` job) | Production build passes in CI |
 
 **CI note:** The additional Windows and macOS portability jobs increase the duration of pull request checks. Windows runners may take longer than Linux runners.

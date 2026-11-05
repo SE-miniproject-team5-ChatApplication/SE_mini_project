@@ -10,7 +10,7 @@ Tagged `v1.0`. Only defect fixes after this, on a `hotfix/` branch.
 - Added a cross-platform portability checklist in `docs/testing/PORTABILITY.md`.
 - Documented the Windows-specific TC-SAFE-02 limitation: Windows does not enforce Unix/POSIX owner-only file permissions in the same way as Linux and macOS.
 - Confirmed that `server/scripts/backup.js` writes backup files using Mongoose rather than calling `mongodump`.
-- Verified Windows server unit tests (42/42 passed) and the Windows client production build; the macOS CI job passes. Chrome was checked by hand, Edge partly and Firefox not.
+- Verified the Windows server unit tests (16 suites, 52 tests) and the Windows client production build; the macOS CI job passes. Chrome, Firefox and Edge pass the same 11 browser checks.
 
 ### Sprint 3 (3-6 Nov 2026): Stretch items and test reports
 - Group read receipts: read only when every current member has read it; the sender can see each member's status.
@@ -29,6 +29,7 @@ Tagged `v1.0`. Only defect fixes after this, on a `hotfix/` branch.
 ### Fixes before the release (5 Nov 2026)
 - Security updates: multer 2.5.0, body-parser 1.20.9 (through Express) and follow-redirects 1.16.2 (through Axios).
 - A receipt for a message that no longer exists no longer causes an error.
+- An upload must start with the signature of its file type before `file-type` reads it. A malformed ASF video named as an image no longer stops the whole server (GHSA-5v7r-6r5c-r473, `docs/SECURITY.md`).
 
 ### Sprint 2 (26 Oct - 2 Nov 2026)
 - Account lock-out; profile page with display name, status, avatar, password change and account deletion.

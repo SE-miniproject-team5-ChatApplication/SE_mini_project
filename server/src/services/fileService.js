@@ -36,6 +36,23 @@ function extensionOf(name) {
   return path.extname(name).toLowerCase();
 }
 
+// First bytes every file of the type must start with. Checked before file-type
+// runs, so content of any other format (for example a malformed ASF video, which
+// makes file-type 16 loop forever, GHSA-5v7r-6r5c-r473) never reaches its parsers.
+const SIGNATURES = {
+  '.jpg': [[0xff, 0xd8, 0xff]],
+  '.jpeg': [[0xff, 0xd8, 0xff]],
+  '.png': [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+  '.gif': [Buffer.from('GIF87a'), Buffer.from('GIF89a')],
+  '.pdf': [Buffer.from('%PDF-')],
+  '.docx': [[0x50, 0x4b, 0x03, 0x04]],
+  '.zip': [[0x50, 0x4b, 0x03, 0x04]],
+};
+
+function startsWithSignature(buffer, extension) {
+  return SIGNATURES[extension].some((sig) => buffer.length >= sig.length && buffer.subarray(0, sig.length).equals(Buffer.from(sig)));
+}
+
 function rejectUnsupportedType() {
   throw Errors.unsupportedType(
     'Only JPG, PNG, GIF, PDF, DOCX, TXT and ZIP files are allowed'
@@ -98,6 +115,8 @@ async function validateFile(file, fileName) {
     if (!isUtf8Text(file.buffer)) rejectUnsupportedType();
     return { mimeType: ALLOWED_TYPES[extension] };
   }
+
+  if (!startsWithSignature(file.buffer, extension)) rejectUnsupportedType();
 
   // file-type 16 uses the CommonJS-compatible fromBuffer API.
   const detected = await FileType.fromBuffer(file.buffer);
