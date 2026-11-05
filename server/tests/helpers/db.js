@@ -10,7 +10,7 @@ function testDbName() {
 }
 
 async function connectTestDb() {
-  if (!hasDb) throw new Error('MONGO_URL is not set - copy server/.env.test.example to server/.env.test');
+  if (!hasDb) throw new Error('MONGO_URL is not set - create server/.env.test with MONGO_URL (see README section 5)');
   const dbName = testDbName();
   if (!dbName.includes('test')) throw new Error('Refusing to use a non-test database');
   await mongoose.connect(process.env.MONGO_URL, { dbName });

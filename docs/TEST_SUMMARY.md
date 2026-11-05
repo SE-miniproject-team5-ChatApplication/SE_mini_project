@@ -11,8 +11,8 @@ system validation, code coverage and branch coverage) are in [`docs/reports/`](r
 |---|---|
 | Build tested | `main` at `81aafb6` plus the pre-release fixes (`fix/pre-release-docs-and-security`) |
 | Date | 5 Nov 2026 |
-| Automated tests (passed / total) | CI, Linux, Node 20: 244 / 244 server tests and 52 / 52 unit tests on Windows and macOS. Local, Windows, Node 22: 245 / 246 with the new TC-NOT-02 test (TC-SAFE-02, below) |
-| Statement coverage (target >= 70 %) | 94.51 % (CI); 94.59 % (local) |
+| Automated tests (passed / total) | CI, Linux, Node 20: 246 / 246 server tests on `main` at 2f004fe, and 52 / 52 unit tests on Windows and macOS. Local, Windows, Node 22: 246 / 247 with the new upload test (TC-SAFE-02, below) |
+| Statement coverage (target >= 70 %) | 94.52 % (CI, `main` at 2f004fe); 94.54 % (local) |
 | Test Plan cases implemented (`npm run trace`) | 42 / 42 |
 | Browser checks | Sprint 2 video script: 37 / 37; group receipts: 14 / 14; 60-second network drop (TC-MSG-05): 8 / 8 (headless Chrome); cross-browser and mute: 11 / 11 in Chrome and in Firefox |
 | Load and availability tests | Latency, capacity and fan-out pass (`docs/testing/PERFORMANCE.md`); availability 99.67 % over 60 minutes (`docs/OPERATIONS.md`) |
@@ -25,7 +25,7 @@ Portability checks performed locally on Windows on 5 Nov 2026:
 
 | Operating System | Check | Result |
 |---|---|---|
-| Windows | Server unit tests | **Pass — 13 suites, 42 tests passed** |
+| Windows | Server unit tests | **Pass — 16 suites, 52 tests passed** |
 | Windows | Client production build | **Pass — Vite production build completed successfully** |
 | Linux | Full server test suite and client checks | Run by the existing Linux CI jobs |
 | macOS | Server unit tests and client build | Pass in CI (`portability` job) |
@@ -79,7 +79,7 @@ The automated tests cover the server, so these client-visible defects passed CI.
 For the v1.0 release:
 
 - [ ] 100 % of planned test cases executed (not met: 41 of 42 fully executed; only the click-count part of TC-USAB-01 has been run, the timed test needs five first-time users)
-- [x] All High-priority cases passed
+- [x] All High-priority cases passed (TC-USAB-01 is Medium in the Test Plan although the SRS calls usability the highest priority: `docs/DEVIATIONS.md` P9)
 - [x] 0 critical or high defects open
 - [x] Coverage >= 70 %
 - [ ] Every requirement in the RTM has at least one passed test case (not met: see "Requirements not fully met" in `docs/DEVIATIONS.md`)

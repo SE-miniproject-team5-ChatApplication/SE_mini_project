@@ -9,7 +9,7 @@ Settings → Rules → Rulesets → **New branch ruleset**
 
 | Setting | Value |
 |---|---|
-| Name | `protect-main` |
+| Name | `Protect main` |
 | Enforcement | Active |
 | Target branches | Include default branch (`main`) |
 | Restrict deletions | On |
@@ -21,6 +21,9 @@ Settings → Rules → Rulesets → **New branch ruleset**
 
 Result: nobody (including owners) pushes directly to `main`; every change arrives
 through a reviewed pull request with green CI.
+
+The three status checks must be listed in the ruleset itself. Without them GitHub still
+shows a failed check but lets the pull request merge (this happened to #228 on 5 Nov 2026).
 
 ## 2. Project board automation
 

@@ -22,12 +22,13 @@ Software Engineering (UE24CS341A) mini-project.
 - One-to-one and group conversations.
 - Real-time messaging using Socket.IO.
 - Offline message delivery and duplicate-message protection.
-- Message delivery and read receipts.
+- Message delivery and read receipts; in a group a message counts as read only when every member has read it, and the sender can see each member's status.
 - Online presence, last-seen status and typing indicators.
-- Paginated message history and keyword search.
+- Paginated message history, keyword search and export of a conversation as a CSV file.
 - Secure file and image sharing.
-- Per-conversation unread counts and notification mute preferences.
+- Per-conversation unread counts and muting (no notifications, unread messages still counted).
 - Group administration with member and admin roles.
+- HTTPS and WSS with TLS 1.2 or newer when a certificate is configured (`docs/TLS.md`).
 
 ## 1. Requirements
 
@@ -153,6 +154,9 @@ npm start --prefix server
 
 The backend serves the built React application and API on port 5000.
 
+- To serve HTTPS/WSS, set `TLS_CERT_FILE` and `TLS_KEY_FILE` in `server/.env` (`docs/TLS.md`).
+- `npm run start:supervised --prefix server` restarts the server automatically if it exits (`docs/OPERATIONS.md`).
+
 ## 5. Testing and Code Quality
 
 The project uses Jest for unit and integration testing.
@@ -207,6 +211,17 @@ npm run build
 
 **Note:** Database integration tests are skipped when `MONGO_URL` is not configured. CI supplies the test database configuration automatically.
 
+### Test reports and other checks
+
+| Command (run with `--prefix server`) | What it does |
+|---|---|
+| `npm run reports` | Runs the tests with coverage and writes the unit test, system validation, code coverage and branch coverage reports to `docs/reports/` |
+| `npm run perf:latency`, `perf:capacity`, `perf:fanout` | Load tests against a running server (`docs/testing/PERFORMANCE.md`) |
+| `npm run monitor` | Measures availability of a running server (`docs/OPERATIONS.md`) |
+| `npm run tls:check -- <port>` | Checks TLS versions, HTTPS, WSS and security headers of a server started with a certificate (`docs/testing/SECURITY_TEST.md`) |
+
+The overall test results are in `docs/TEST_SUMMARY.md`.
+
 ## 6. Project Structure
 
 ```text
@@ -214,6 +229,9 @@ SE_mini_project/
 |
 |-- Documents/             Part-1 deliverables (SRS, SAD, Test Plan)
 |-- docs/                  Technical documentation
+|   |-- testing/           Manual and load test procedures and results
+|   |-- reports/           Part-3 test and coverage reports
+|-- demo/                  Sprint demo videos and scripts
 |
 |-- server/
 |   |-- src/
@@ -226,7 +244,7 @@ SE_mini_project/
 |   |   |-- utils/         Shared utilities
 |   |
 |   |-- tests/             Jest unit and integration tests
-|   |-- scripts/           Backup, restore and traceability scripts
+|   |-- scripts/           Backup, restore, traceability, report, load-test, monitoring and TLS-check scripts
 |
 |-- client/
     |-- src/
@@ -237,15 +255,24 @@ SE_mini_project/
         |-- api/
 ```
 
-## 7. API and Socket.IO Documentation
+## 7. Documentation
 
 | Document | Description |
 |---|---|
 | `docs/API.md` | REST API endpoints, request formats and responses |
 | `docs/SOCKET_EVENTS.md` | Socket.IO events, payloads and acknowledgements |
+| `docs/DEVIATIONS.md` | Every difference from the SRS, SAD and Test Plan, with the reason |
+| `docs/TEST_SUMMARY.md` | Test results and exit criteria for v1.0 |
+| `docs/reports/` | Unit test, system validation, code coverage and branch coverage reports |
+| `docs/testing/` | Performance, portability, reliability, security and usability tests |
 | `docs/TRACEABILITY.md` | Test Plan cases mapped to test files |
 | `docs/SECURITY.md` | Security information |
-| `docs/BRANCH_PROTECTION.md` | GitHub branch protection instructions |
+| `docs/TLS.md` | Running the server with HTTPS/WSS |
+| `docs/OPERATIONS.md` | Supervised start, availability monitoring and backups |
+| `docs/SCALABILITY.md` | Stateless handlers and adding a Redis adapter |
+| `docs/BRANCH_PROTECTION.md` | GitHub branch protection settings |
+| `docs/RELEASE.md` | Tagging and publishing v1.0 |
+| `CHANGELOG.md` | Changes in each sprint |
 
 ## 8. Database Backup and Restore
 

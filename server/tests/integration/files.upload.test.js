@@ -292,6 +292,23 @@ describeDb('File uploads and REQ-FIL-2 type validation', () => {
     expect(await countStoredFiles(config.uploadDir)).toBe(beforeFiles);
   });
 
+  test('TC-FIL-02 rejects a malformed ASF file named as a PNG and keeps serving requests', async () => {
+    const { a, conversationId } = await createDirectChat();
+    // ASF header object followed by a sub-object of size 0: file-type 16 loops forever on this.
+    const head = Buffer.alloc(30);
+    Buffer.from([0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11, 0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c]).copy(head, 0);
+    head.writeBigUInt64LE(30n, 16);
+    const sub = Buffer.alloc(24);
+    Buffer.from('0123456789abcdef').copy(sub, 0);
+    const asf = Buffer.concat([head, sub, Buffer.alloc(200)]);
+
+    const res = await upload(a.token, conversationId, asf, 'holiday.png');
+
+    expect(res.status).toBe(415);
+    expect(res.body.error.code).toBe('UNSUPPORTED_TYPE');
+    expect((await request(srv.app).get('/api/health')).status).toBe(200);
+  }, 10000);
+
   test('rejects binary content named as a text file without storing it', async () => {
     const { a, conversationId } = await createDirectChat();
     const binary = Buffer.from([0x41, 0x00, 0x42, 0xff]);
