@@ -116,4 +116,6 @@ function main() {
   process.exit(failures === 0 ? 0 : 1);
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { TEST_CASES, findCoverage };

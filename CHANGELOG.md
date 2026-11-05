@@ -12,7 +12,7 @@ Tagged `v1.0`. Only defect fixes after this, on a `hotfix/` branch.
 - Confirmed that `server/scripts/backup.js` writes backup files using Mongoose rather than calling `mongodump`.
 - Verified Windows server unit tests (42/42 passed) and the Windows client production build; the macOS CI job passes. Chrome was checked by hand, Edge partly and Firefox not.
 
-### Stretch items completed (3-5 Nov 2026)
+### Sprint 3 (3-6 Nov 2026): Stretch items and test reports
 - Group read receipts: read only when every current member has read it; the sender can see each member's status.
 - Export a conversation as a CSV file (Chat History Report).
 - Mute a conversation: no notifications, unread messages still counted.
@@ -23,6 +23,7 @@ Tagged `v1.0`. Only defect fixes after this, on a `hotfix/` branch.
 - Group fan-out load test: a message to a 50-member group reaches everyone within 70 ms for 95 % of messages (`npm run perf:fanout`).
 - Availability: `npm run start:supervised` restarts the server if it exits, and `npm run monitor` measures availability (99.67 % over 60 minutes).
 - Stateless socket handlers checked by a test, and the steps to add a Redis adapter (docs/SCALABILITY.md).
+- Part-3 test reports in `docs/reports/`: unit test, system validation, code coverage and branch coverage (`npm run reports`).
 
 ### Fixes before the release (5 Nov 2026)
 - Security updates: multer 2.5.0, body-parser 1.20.9 (through Express) and follow-redirects 1.16.2 (through Axios).
