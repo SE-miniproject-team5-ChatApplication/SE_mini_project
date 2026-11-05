@@ -1,6 +1,6 @@
 {
   "name": "chat-application-server",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Node.js + Express + Socket.IO server for the Team 5 chat application",
   "main": "src/server.js",
@@ -10,10 +10,12 @@
     "lint": "eslint .",
     "test": "jest",
     "test:ci": "jest --coverage --runInBand",
-    "backup": "node scripts/backup.js",
-    "restore": "node scripts/restore.js",
+    "perf:load": "node scripts/perf/load-times.js",
+    "perf:search": "node scripts/perf/search-time.js",
     "perf:latency": "node scripts/perf/latency.js",
     "perf:capacity": "node scripts/perf/capacity.js",
+    "perf:fanout": "node scripts/perf/group-fanout.js",
+    "seed": "node scripts/seed.js",
     "trace": "node scripts/check-traceability.js"
   },
   "engines": {
@@ -25,7 +27,6 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
-    "file-type": "16.5.4",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.8.3",
