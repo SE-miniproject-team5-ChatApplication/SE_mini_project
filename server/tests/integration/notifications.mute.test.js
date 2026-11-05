@@ -11,6 +11,7 @@ const {
 const { createApp } = require('../../src/app');
 const { createDirectChat } = require('../helpers/chat');
 const { createUser } = require('../helpers/factory');
+const { createMessage } = require('../../src/services/messageService');
 const { Member } = require('../../src/models');
 
 describeDb('DD-NOT conversation mute preferences', () => {
@@ -59,6 +60,26 @@ describeDb('DD-NOT conversation mute preferences', () => {
     });
 
     expect(member.muted).toBe(false);
+  });
+
+  // REQ-NOT-4: muting suppresses notifications but still counts unread messages.
+  // The client shows no notification for a conversation marked muted (ConversationList.jsx).
+  test('TC-NOT-02 a muted conversation still counts unread messages and is marked muted', async () => {
+    const { a, b, conversationId } = await createDirectChat();
+    await request(app)
+      .put(`/api/conversations/${conversationId}/mute`)
+      .set('Authorization', `Bearer ${b.token}`)
+      .send({ muted: true })
+      .expect(204);
+
+    await createMessage({ conversationId, senderId: a.id, content: 'are you there?' });
+    await createMessage({ conversationId, senderId: a.id, content: 'still there?' });
+
+    const list = await request(app).get('/api/conversations').set('Authorization', `Bearer ${b.token}`);
+    expect(list.status).toBe(200);
+    const chat = list.body.find((c) => c.id === String(conversationId));
+    expect(chat.muted).toBe(true);
+    expect(chat.unread).toBe(2);
   });
 
   test('muting a conversation does not change another member preference', async () => {

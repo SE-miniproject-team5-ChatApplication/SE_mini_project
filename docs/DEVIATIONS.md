@@ -10,7 +10,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 |---|---|---|---|
 | P1 | SAD 4.6: four sprints (skeleton+auth; messaging, presence, groups; receipts, history, files, notifications; hardening) | A dry-run week (12-16 Oct), Sprint 1 (19-23 Oct), Sprint 2 (26 Oct - 2 Nov) and Sprint 3 (3-6 Nov) for the Stretch list | The Part-2 brief fixed two sprints, and Part 3 allows an optional Sprint 3 for spill-over. Items were re-planned in the GitHub Project (backlog "Sprint" field). |
 | P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency, capacity and group fan-out were measured with load scripts (`docs/testing/PERFORMANCE.md`); the usability test was not run (see "Requirements not fully met"). |
-| P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`); message latency, capacity and group fan-out are Node load scripts (`server/scripts/perf/`) | Fewer tools to install on student laptops. |
+| P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`); message latency, capacity and group fan-out are Node load scripts (`server/scripts/perf/`); TLS is checked with `npm run tls:check` and the repository with a git-history search instead of testssl.sh, ZAP and gitleaks (`docs/testing/SECURITY_TEST.md`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
 | P6 | PRC-4: no feature merges after 30 Oct | 30 pull requests were merged between 31 Oct and 5 Nov: #196-#199, #200-#203, #205-#225 and the Part-3 test reports pull request | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. REQ-RCP-5, REQ-HIS-5, REQ-NOT-4, NFR-SEC-3, NFR-PERF-1, NFR-PERF-2, NFR-PERF-5, NFR-QA-1, NFR-QA-3, NFR-QA-6 and NFR-QA-7 were finished from the Stretch backlog in Sprint 3, before v1.0 was tagged. #225 applied security updates and one fix before the release. |
@@ -57,10 +57,8 @@ fully carried out.
 
 | Requirement | Issue | State | Test case |
 |---|---|---|---|
-| REQ-NOT-4 mute a conversation | #61 | Built: Mute button in the chat header (`MuteButton.jsx`); muted chats count unread messages but show no notification | TC-NOT-02 has no automated test |
-| NFR-SEC-3 TLS | #73 | Built: HTTPS and WSS with TLS 1.2 or newer when a certificate is configured (`docs/TLS.md`); local runs use HTTP | TC-SEC-03 partly run: configuration tests only; testssl.sh and OWASP ZAP were not run |
 | NFR-QA-1 first message within 3 min | #78 | Test procedure written (`docs/testing/USABILITY_TEST.md`) | TC-USAB-01 not carried out: no results recorded |
-| NFR-QA-6 portability | #83 | CI runs the server unit tests and the client build on Windows and macOS (both pass); Chrome checked by hand, Edge partly | Firefox not tested; TC-SAFE-02 fails on Windows (T8) |
+| NFR-QA-6 portability | #83 | CI runs the server unit tests and the client build on Windows and macOS (both pass); Chrome and Firefox pass in the browser | Edge only partly checked; TC-SAFE-02 fails on Windows (T8) |
 
 ## Behaviour the SRS did not specify, or that differs from it (our decisions)
 
