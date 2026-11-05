@@ -2,7 +2,8 @@
 
 Results for the v1.0 release, measured on 5 Nov 2026. CI numbers are for `main` at `81aafb6`
 (all backlog issues merged); the local run is on the pre-release fix branch, which adds
-security updates, one fix and documents on top of it.
+security updates, one fix and documents on top of it. The detailed Part-3 reports (unit test,
+system validation, code coverage and branch coverage) are in [`docs/reports/`](reports/README.md).
 
 ## Overall Test Results
 

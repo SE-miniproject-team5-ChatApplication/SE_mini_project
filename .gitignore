@@ -9,6 +9,8 @@ node_modules/
 # build and test output
 dist/
 coverage/
+# ...except the coverage report published with the Part-3 test reports
+!docs/reports/coverage/
 *.log
 
 # TLS keys (NFR-SEC-3)

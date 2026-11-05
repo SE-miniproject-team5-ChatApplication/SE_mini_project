@@ -17,7 +17,8 @@
     "perf:capacity": "node scripts/perf/capacity.js",
     "perf:fanout": "node scripts/perf/group-fanout.js",
     "monitor": "node scripts/uptime-monitor.js",
-    "trace": "node scripts/check-traceability.js"
+    "trace": "node scripts/check-traceability.js",
+    "reports": "node scripts/test-reports.js"
   },
   "engines": {
     "node": ">=18"
