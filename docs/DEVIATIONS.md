@@ -37,6 +37,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 | S1 | SAD 4.1 and SRS Appendix C: code under `server/routes/`, `server/sockets/` | Code is under `server/src/`; socket handlers are in `server/src/sockets/handlers/` | Separates source from `tests/` and `scripts/` in the server folder. |
 | S2 | SAD 4.1: `sockets/groupHandler.js` | No group socket handler. Group changes go through `groupService.js`, which sends `group:update`; group messages use `messageHandler.js` | Group changes arrive over REST, so no separate handler was needed. |
 | S3 | SAD 4.1: one route file per design unit | Extra route files `contacts.js`, `conversations.js`, `health.js`, `presence.js` and `search.js` | Keeps each file to one responsibility (NFR-QA-4). |
+| S4 | SRS NFR-QA-7: handlers stateless so a Redis adapter can be added | Handlers keep no state and all real-time messages use Socket.IO rooms; the presence connection map, both rate limits and the upload folder are per server, and no adapter is installed (docs/SCALABILITY.md) | The requirement asks only that an adapter can be added later. |
 
 ## Data model and API
 
@@ -60,7 +61,6 @@ These were moved to the Stretch backlog and were not finished by the end of Spri
 | NFR-SEC-3 TLS | #73 | Not built | TC-SEC-03 partly run |
 | NFR-QA-1 first message within 3 min | #78 | Not measured | TC-USAB-01 not run |
 | NFR-QA-6 portability | #83 | CI portability job added for Windows and macOS unit tests and client builds; Linux retains the full server test suite. macOS CI result and manual browser/360 px checks pending. TC-SAFE-02 has a documented Windows permission limitation. | - |
-| NFR-QA-7 scalability | #129 | Open | - |
 
 ## Behaviour the SRS did not specify, or that differs from it (our decisions)
 

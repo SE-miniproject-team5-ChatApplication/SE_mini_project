@@ -62,6 +62,7 @@ The automated tests cover the server, so these client-visible defects passed CI.
 | Files | TC-FIL-01..03 | Pass | Automated |
 | Notifications | TC-NOT-01..02 | TC-NOT-01 pass; TC-NOT-02 not run in the historical baseline | Historical baseline |
 | Performance | TC-PERF-01..04 | Pass | Latency p95 28-38 ms with 100 users; 200 connections with every message stored and delivered; 50-member group fan-out p95 37-67 ms (`docs/testing/PERFORMANCE.md`) |
+| Scalability | NFR-QA-7 (no Test Plan case) | Pass | Guard test server/tests/unit/stateless.test.js; limits in docs/SCALABILITY.md |
 | Security | TC-SEC-01..03 | TC-SEC-01, -02 pass; TC-SEC-03 partial | Only the configuration checks are automated; TLS is not built and ZAP/testssl were not run |
 | Safety | TC-SAFE-01 | Pass | Automated |
 | Availability | NFR-QA-3 (no Test Plan case) | Pass | 99.67 % over 60 minutes under load; the server restarted in 1 s after it was stopped (`docs/OPERATIONS.md`) |
