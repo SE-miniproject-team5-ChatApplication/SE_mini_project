@@ -1,22 +1,20 @@
 # Deviations from the Part-1 documents (SRS v1.1, SAD v1.0, Test Plan v1.0)
 
-Part-2 deliverable 2(i): every difference between what we documented and what we
-built is listed here with the reason. Explain these in the final demo.
+Part-2 deliverable 2(i): every difference between what we documented and what we built is listed here with the reason. Explain these in the final demo.
 
-Section numbers refer to the versions named in the title. The updated documents in
-`Documents/Part-1 Deliverables/` are SRS v1.2, SAD v1.1 and Test Plan v1.1.
+Section numbers refer to the versions named in the title. The updated documents in `Documents/Part-1 Deliverables/` are SRS v1.2, SAD v1.1 and Test Plan v1.1.
 
 ## Process and schedule
 
 | # | Document says | What we did | Why |
 |---|---|---|---|
 | P1 | SAD 4.6: four sprints (skeleton+auth; messaging, presence, groups; receipts, history, files, notifications; hardening) | A dry-run week (12-16 Oct), Sprint 1 (19-23 Oct), Sprint 2 (26 Oct - 2 Nov) and a Stretch list | The Part-2 brief fixed two sprints. Items were re-planned in the GitHub Project (backlog "Sprint" field). |
-| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency and capacity were measured with load scripts (`docs/testing/PERFORMANCE.md`); fan-out and usability tests were not run (see "Requirements not delivered"). |
+| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency and capacity were measured with load scripts (`docs/testing/PERFORMANCE.md`); fan-out and usability tests were notrun (see "Requirements not delivered"). |
 | P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`); message latency and capacity are Node load scripts (`server/scripts/perf/`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
-| P6 | PRC-4: no feature merges after 30 Oct | 22 pull requests were merged between 31 Oct and 4 Nov: #196-#199, #200-#203, #205-#217 and the NFR-PERF-2 pull request | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. REQ-RCP-5, REQ-HIS-5, REQ-NOT-4, NFR-PERF-1 and NFR-PERF-2 were finished from the Stretch backlog before v1.0 was tagged. |
-| P7 | SRS NFR-PERF-1 / Test Plan TC-PERF-01: 100 users on a LAN, Artillery script | One laptop runs the server, MongoDB and 100 simulated users; each user sends one message every 5 s, spread evenly; latency is measured to the recipient's connection, not the screen. For capacity, 200 users each send one message a second (`docs/testing/PERFORMANCE.md`) | The SRS gives no message rate. One machine is a harder test than a LAN, and the script needs no extra tools. |
+| P6 | PRC-4: no feature merges after 30 Oct | 22 pull requests were merged between 31 Oct and 4 Nov: #196-#199,#200-#203, #205-#217 and the NFR-PERF-2 pull request | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. REQ-RCP-5, REQ-HIS-5, REQ-NOT-4, NFR-PERF-1 and NFR-PERF-2 were finished from the Stretch backlog before v1.0 was tagged. |
+| P7 | SRS NFR-PERF-1 / Test Plan TC-PERF-01: 100 users on a LAN, Artillery script | One laptop runs the server,MongoDB and 100 simulated users; each user sends one message every 5 s, spread evenly; latency is measured to the recipient's connection, not the screen. For capacity, 200 users each send one message a second (`docs/testing/PERFORMANCE.md`) | The SRS gives no message rate. One machine is a harder test than a LAN, and the script needs noextra tools. |
 
 ## Technology
 
@@ -29,6 +27,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 | T5 | SAD 4.6 open issue: plain CSS or Tailwind | Plain CSS (`client/src/styles.css`) | No build plugin needed; small app. |
 | T6 | SAD 4.4: pino logging | pino, with password/token/message fields redacted | (as planned - listed because redaction paths are a design detail added) |
 | T7 | SRS 3.2: MongoDB 6.x | MongoDB 6 or newer (README); CI uses MongoDB 7 | All automated tests pass on MongoDB 7 in CI. |
+| T8 | Test Plan TC-SAFE-02: backup files restricted to their owner | TC-SAFE-02 fails on Windows because Windows does not enforce Unix/POSIX owner-only file permissions. `server/scripts/backup.js` writes backup files using Mongoose; it does not call `mongodump`. | POSIX mode `0600` is not enforced on Windows in the same way as Linux. The owner-only permission requirement continues to be checked in the Linux environment. This is documented as a Windows platform limitation. |
 
 ## Code structure
 
@@ -61,7 +60,7 @@ These were moved to the Stretch backlog and were not finished by the end of Spri
 | NFR-SEC-3 TLS | #73 | Not built | TC-SEC-03 partly run |
 | NFR-QA-1 first message within 3 min | #78 | Not measured | TC-USAB-01 not run |
 | NFR-QA-3 availability 99 % | #80 | Not measured | - |
-| NFR-QA-6 portability | #83 | Not confirmed: tests run on Windows and Linux, not on macOS | - |
+| NFR-QA-6 portability | #83 | CI portability job added for Windows and macOS unit tests and client builds; Linux retains the full server test suite. macOS CI result and manual browser/360 px checks pending. TC-SAFE-02 has a documented Windows permission limitation. | - |
 | NFR-QA-7 scalability | #129 | Open | - |
 
 ## Behaviour the SRS did not specify, or that differs from it (our decisions)
