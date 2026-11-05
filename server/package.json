@@ -17,6 +17,7 @@
     "perf:capacity": "node scripts/perf/capacity.js",
     "perf:fanout": "node scripts/perf/group-fanout.js",
     "monitor": "node scripts/uptime-monitor.js",
+    "tls:check": "node --tls-min-v1.0 scripts/tls-check.js",
     "trace": "node scripts/check-traceability.js",
     "reports": "node scripts/test-reports.js"
   },

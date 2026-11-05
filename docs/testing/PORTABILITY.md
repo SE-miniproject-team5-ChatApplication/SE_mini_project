@@ -28,9 +28,9 @@ Manual testing was performed on 5 November 2026.
 
 | Browser / Viewport | Login | Chat | Upload / Thumbnail | Group | Notes |
 |---|---|---|---|---|---|
-| Google Chrome | Pass | Pass | Pass | Pass | Login, chat history, message sending, image thumbnail, group information and group messaging verified. |
+| Google Chrome | Pass | Pass | Pass | Pass | Login, chat history, message sending, image thumbnail, group information and group messaging verified. The same 11 headless checks as Firefox also pass (Chrome 156). |
 | Microsoft Edge | Pass | Pass | Pass | Not tested | Login, existing chat history and image thumbnail verified. Group messaging and new message sending not tested. |
-| Mozilla Firefox | Not tested | Not tested | Not tested | Not tested | Browser test skipped. |
+| Mozilla Firefox 150 | Pass | Pass | Pass | Pass | Headless Firefox run on 5 Nov 2026: two users, chat, image thumbnail, group message and muting (TC-NOT-02); 11 / 11 checks. |
 | Chrome mobile viewport (360 px) | Not tested | Pass | Not tested | Not tested | Header, sidebar, message bubbles and composer fit. No horizontal overflow observed. |
 
 ## CI Test Coverage
