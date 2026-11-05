@@ -56,9 +56,10 @@ async function saveStatus(message, members) {
   return { message, changed: res.modifiedCount === 1 };
 }
 
-// After a receipt was added.
+// After a receipt was added. The message may have been removed meanwhile.
 async function refreshStatus(messageId) {
   const message = await Message.findById(messageId);
+  if (!message) return { message: null, changed: false };
   return saveStatus(message, await memberUserIds(message.conversationId));
 }
 
