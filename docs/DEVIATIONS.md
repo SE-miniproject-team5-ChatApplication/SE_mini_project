@@ -9,7 +9,7 @@ Section numbers refer to the versions named in the title. The updated documents 
 | # | Document says | What we did | Why |
 |---|---|---|---|
 | P1 | SAD 4.6: four sprints (skeleton+auth; messaging, presence, groups; receipts, history, files, notifications; hardening) | A dry-run week (12-16 Oct), Sprint 1 (19-23 Oct), Sprint 2 (26 Oct - 2 Nov) and a Stretch list | The Part-2 brief fixed two sprints. Items were re-planned in the GitHub Project (backlog "Sprint" field). |
-| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency, capacity and group fan-out were measured with load scripts (`docs/testing/PERFORMANCE.md`); the usability test was not run (see "Requirements not delivered"). |
+| P2 | Test Plan 7: system/performance tests 2-10 Nov, UAT 12-13 Nov | Unit + integration tests run in CI on every PR from Sprint 1; dashboard and search speed tests run with them | Same two-sprint schedule. Message latency, capacity and group fan-out were measured with load scripts (`docs/testing/PERFORMANCE.md`); the usability test was not run (see "Requirements not fully met"). |
 | P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`); message latency, capacity and group fan-out are Node load scripts (`server/scripts/perf/`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
@@ -45,22 +45,22 @@ Section numbers refer to the versions named in the title. The updated documents 
 |---|---|---|---|
 | D1 | SRS 7: six collections | A seventh collection `revokedtokens` (auto-expiring) | REQ-AUTH-6 + REQ-AUTH-7: a logged-out token must stop working before its 24 h expiry. |
 | D2 | Appendix B.2: status includes "deleted" | Status `deleted` plus `deletedAt`; the original text stays in the database but is never returned | BR-4: "deletion does not remove the record for audit but hides its content". |
-| D3 | SAD 4.3 endpoint list | Added: `POST /api/conversations/direct`, `GET /api/groups/:id`, `GET /api/presence`, `GET /api/users/:id/avatar`, `DELETE /api/users/me`, `GET /api/health`, `GET /api/messages/:id/receipts`. Changed: removing a member is `DELETE /api/groups/:id/members/:userId` (no request body). Not built: `GET /api/conversations/:id/export` (REQ-HIS-5) | Needed to start direct chats (BR-2), show group info (REQ-GRP-2), initial presence (REQ-PRS-1), show avatars, delete accounts (NFR-SEC-7), check the server is up and show per-member receipts (REQ-RCP-5). Full list: `docs/API.md`. |
+| D3 | SAD 4.3 endpoint list | Added: `POST /api/conversations/direct`, `GET /api/groups/:id`, `GET /api/presence`, `GET /api/users/:id/avatar`, `DELETE /api/users/me`, `GET /api/health`, `GET /api/messages/:id/receipts`. Changed: removing a member is `DELETE /api/groups/:id/members/:userId` (no request body). | Needed to start direct chats (BR-2), show group info (REQ-GRP-2), initial presence (REQ-PRS-1), show avatars, delete accounts (NFR-SEC-7), check the server is up and show per-member receipts (REQ-RCP-5). Full list: `docs/API.md`. |
 | D4 | SAD 4.3.6: `message:ack` event | `message:ack` event **and** the Socket.IO acknowledgement callback; extra event `session:ready` | The callback lets the client match each ack to its message without extra bookkeeping. Full list: `docs/SOCKET_EVENTS.md`. |
 | D5 | SRS 7 / NFR-PERF-4: text index for search | The text index exists, but search uses a case-insensitive pattern match limited to the user's conversations | MongoDB text search only matches whole words; REQ-HIS-3 users expect "meet" to find "meeting". Tested within the 2 s limit on 10,000 messages (TC-PERF-03). |
 | D6 | SAD 4.3.6: `notification:unread` event | Event not implemented. Unread counts come from `GET /api/conversations`; a count is reset by the `message:read` event | The client already refreshes the conversation list, so no separate event was needed. |
 
-## Requirements not delivered
+## Requirements not fully met
 
-These were moved to the Stretch backlog and were not finished by the end of Sprint 2. Their issues are still open.
+Every backlog issue is closed. These requirements are built, but their acceptance test was not
+fully carried out.
 
 | Requirement | Issue | State | Test case |
 |---|---|---|---|
-| REQ-HIS-5 CSV export | #52 | Not built | TC-HIS-03 not run |
-| REQ-NOT-4 mute a conversation | #61 | Partial: the server API works and the client respects a muted conversation, but the UI has no mute control | TC-NOT-02 not run |
-| NFR-SEC-3 TLS | #73 | Not built | TC-SEC-03 partly run |
-| NFR-QA-1 first message within 3 min | #78 | Not measured | TC-USAB-01 not run |
-| NFR-QA-6 portability | #83 | CI portability job added for Windows and macOS unit tests and client builds; Linux retains the full server test suite. macOS CI result and manual browser/360 px checks pending. TC-SAFE-02 has a documented Windows permission limitation. | - |
+| REQ-NOT-4 mute a conversation | #61 | Built: Mute button in the chat header (`MuteButton.jsx`); muted chats count unread messages but show no notification | TC-NOT-02 has no automated test |
+| NFR-SEC-3 TLS | #73 | Built: HTTPS and WSS with TLS 1.2 or newer when a certificate is configured (`docs/TLS.md`); local runs use HTTP | TC-SEC-03 partly run: configuration tests only; testssl.sh and OWASP ZAP were not run |
+| NFR-QA-1 first message within 3 min | #78 | Test procedure written (`docs/testing/USABILITY_TEST.md`) | TC-USAB-01 not carried out: no results recorded |
+| NFR-QA-6 portability | #83 | CI runs the server unit tests and the client build on Windows and macOS (both pass); Chrome checked by hand, Edge partly | Firefox not tested; TC-SAFE-02 fails on Windows (T8) |
 
 ## Behaviour the SRS did not specify, or that differs from it (our decisions)
 

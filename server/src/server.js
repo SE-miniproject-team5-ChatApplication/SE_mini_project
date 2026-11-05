@@ -19,7 +19,7 @@ async function start() {
 // NFR-SAFE-4: log anything that escaped every other handler. A rejected promise
 // is logged and the server keeps running; a truly unexpected exception leaves
 // the process in an unknown state, so it is logged and the process exits
-// (start it with a process manager such as pm2 / nodemon to restart it).
+// (`npm run start:supervised` starts it again, see docs/OPERATIONS.md).
 process.on('unhandledRejection', (reason) => {
   logger.error({ err: reason }, 'unhandled promise rejection');
 });

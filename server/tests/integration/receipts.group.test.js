@@ -5,7 +5,7 @@ const { connectClient, waitForMatch } = require('../helpers/socket');
 const { createGroupWith } = require('../helpers/group');
 const { createUser } = require('../helpers/factory');
 const { createMessage } = require('../../src/services/messageService');
-const { markRead } = require('../../src/services/receiptService');
+const { markRead, refreshStatus } = require('../../src/services/receiptService');
 const { createGroup, leaveGroup, removeMember } = require('../../src/services/groupService');
 const { deleteAccount } = require('../../src/services/userService');
 const { Contact, Message } = require('../../src/models');
@@ -84,6 +84,13 @@ describeDb('REQ-RCP-5 group read receipts', () => {
 
     await deleteAccount(leaver.id, { password: 'Chat1234' });
     expect(await statusOf(msg)).toBe('read');
+  });
+
+  test('TC-RCP-02 a receipt for a message that no longer exists changes nothing', async () => {
+    const { admin, groupId } = await createGroupWith(2);
+    const msg = await createMessage({ conversationId: groupId, senderId: admin.id, content: 'soon gone' });
+    await Message.deleteOne({ _id: msg._id });
+    await expect(refreshStatus(String(msg._id))).resolves.toEqual({ message: null, changed: false });
   });
 
   test('TC-RCP-02 the sender is told at once when a member leaving makes the message read', async () => {
