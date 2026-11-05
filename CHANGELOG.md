@@ -16,6 +16,7 @@
 - Capacity load test: 200 simultaneous connections, every message stored and delivered (`npm run perf:capacity`).
 - Group fan-out load test: a message to a 50-member group reaches everyone within 70 ms for 95 % of messages (`npm run perf:fanout`).
 - Availability: `npm run start:supervised` restarts the server if it exits, and `npm run monitor` measures availability (99.67 % over 60 minutes).
+- Stateless socket handlers checked by a test, and the steps to add a Redis adapter (docs/SCALABILITY.md).
 
 ### Sprint 2 (26 Oct - 2 Nov 2026)
 - Account lock-out; profile page with display name, status, avatar, password change and account deletion.
