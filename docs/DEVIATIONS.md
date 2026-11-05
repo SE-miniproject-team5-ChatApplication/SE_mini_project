@@ -13,8 +13,9 @@ Section numbers refer to the versions named in the title. The updated documents 
 | P3 | Test Plan 5 and 6: Playwright UI automation, Artillery load tests, OWASP ZAP, testssl.sh | Not used. Browser flows are checked by hand (`docs/testing/RELIABILITY.md`); speed tests are Jest integration tests (`perf.dashboard.test.js`, `perf.search.test.js`); message latency, capacity and group fan-out are Node load scripts (`server/scripts/perf/`) | Fewer tools to install on student laptops. |
 | P4 | SAD 3.9: gitleaks in CI | gitleaks is a manual command (`docs/SECURITY.md`) | The gitleaks GitHub Action needs a paid licence for organisation repositories. |
 | P5 | Test Plan 6: seed script with 10 users, 3 groups and sample data | No seed script in the repository; tests create their own data | Each test sets up exactly the data it needs. |
-| P6 | PRC-4: no feature merges after 30 Oct | 25 pull requests were merged between 31 Oct and 5 Nov: #196-#199, #200-#203 and #205-#221 | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. REQ-RCP-5, REQ-HIS-5, REQ-NOT-4, NFR-PERF-1, NFR-PERF-2, NFR-PERF-5, NFR-QA-1 and NFR-QA-6 were finished from the Stretch backlog before v1.0 was tagged. |
+| P6 | PRC-4: no feature merges after 30 Oct | 26 pull requests were merged between 31 Oct and 5 Nov: #196-#199, #200-#203, #205-#221 and the NFR-QA-3 pull request | Sprint 2 backlog items finished late. #205 repaired a broken `main`, and #209 added the missing profile page UI. #211 fixed defects found while preparing the demo, which PRC-4 allows. REQ-RCP-5, REQ-HIS-5, REQ-NOT-4, NFR-PERF-1, NFR-PERF-2, NFR-PERF-5, NFR-QA-1, NFR-QA-3 and NFR-QA-6 were finished from the Stretch backlog before v1.0 was tagged. |
 | P7 | SRS NFR-PERF-1 / Test Plan TC-PERF-01: 100 users on a LAN, Artillery script | One laptop runs the server, MongoDB and 100 simulated users; each user sends one message every 5 s, spread evenly; latency is measured to the recipient's connection, not the screen. For capacity, 200 users each send one message a second; for fan-out, one member sends 10 messages to a 50-member group (`docs/testing/PERFORMANCE.md`) | The SRS gives no message rate. One machine is a harder test than a LAN, and the script needs no extra tools. |
+| P8 | SRS NFR-QA-3: available at least 99 % during scheduled demonstration and testing periods | Measured once for 60 minutes on one laptop: `/api/health` checked every 10 s under a continuous chat load, with the server run under a restart script (`docs/OPERATIONS.md`) | No demo or test period had been scheduled yet; a measured session shows the method and the result. |
 
 ## Technology
 
@@ -58,7 +59,6 @@ These were moved to the Stretch backlog and were not finished by the end of Spri
 | REQ-NOT-4 mute a conversation | #61 | Partial: the server API works and the client respects a muted conversation, but the UI has no mute control | TC-NOT-02 not run |
 | NFR-SEC-3 TLS | #73 | Not built | TC-SEC-03 partly run |
 | NFR-QA-1 first message within 3 min | #78 | Not measured | TC-USAB-01 not run |
-| NFR-QA-3 availability 99 % | #80 | Not measured | - |
 | NFR-QA-6 portability | #83 | CI portability job added for Windows and macOS unit tests and client builds; Linux retains the full server test suite. macOS CI result and manual browser/360 px checks pending. TC-SAFE-02 has a documented Windows permission limitation. | - |
 | NFR-QA-7 scalability | #129 | Open | - |
 

@@ -6,6 +6,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "start:supervised": "node scripts/supervise.js",
     "dev": "nodemon src/server.js",
     "lint": "eslint .",
     "test": "jest",
@@ -15,6 +16,7 @@
     "perf:latency": "node scripts/perf/latency.js",
     "perf:capacity": "node scripts/perf/capacity.js",
     "perf:fanout": "node scripts/perf/group-fanout.js",
+    "monitor": "node scripts/uptime-monitor.js",
     "trace": "node scripts/check-traceability.js"
   },
   "engines": {
